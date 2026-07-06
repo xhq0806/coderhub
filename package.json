@@ -1,0 +1,26 @@
+{
+  "name": "coderhub",
+  "version": "1.0.0",
+  "description": "coderhub旨在创建一个程序员分享生活动态的平台",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./src/main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xhq0806/coderhub.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/xhq0806/coderhub/issues"
+  },
+  "homepage": "https://github.com/xhq0806/coderhub#readme",
+  "dependencies": {
+    "@koa/router": "^15.7.0",
+    "koa": "^3.2.1",
+    "koa-bodyparser": "^4.4.1"
+  }
+}
