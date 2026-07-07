@@ -1,7 +1,6 @@
 // 内容服务封装动态发布、审核、查询、编辑和删除业务。
 const connectionPool = require('../app/database')
-const tagService = require('./tag_service')
-const fileService = require('./file_service')
+const contentPublicationService = require('./content_publication_service')
 const { CONTENT_STATUS } = require('../constants/status')
 const { createError, parsePage } = require('../utils/response')
 
@@ -18,18 +17,6 @@ function toContentItem(row) {
     createdAt: row.created_at || row.createdAt,
     updatedAt: row.updated_at || row.updatedAt
   }
-}
-
-// 统一校验 ID 数组参数，避免非数组、空值、NaN 或非正整数进入数据库层。
-function normalizeIdArray(value, fieldName) {
-  if (value === undefined) return []
-  if (!Array.isArray(value)) throw createError('PARAMS_ERROR', `${fieldName}必须是数组`)
-
-  const ids = value.map((item) => Number(item))
-  const hasInvalidId = ids.some((id) => !Number.isInteger(id) || id <= 0)
-  if (hasInvalidId) throw createError('PARAMS_ERROR', `${fieldName}只能包含正整数`)
-
-  return [...new Set(ids)]
 }
 
 class ContentService {
@@ -54,22 +41,16 @@ class ContentService {
 
   // 创建待审核内容，正文和图片不能同时为空，标签和文件必须有效。
   async createContent(userId, payload = {}) {
-    const { body } = payload
-    const uniqueTagIds = normalizeIdArray(payload.tagIds, 'tagIds')
-    const uniqueFileIds = normalizeIdArray(payload.fileIds, 'fileIds')
-    if ((!body || !String(body).trim()) && !uniqueFileIds.length) throw createError('PARAMS_ERROR', '内容正文和图片不能同时为空')
-    await tagService.assertEnabledTags(uniqueTagIds)
-    await fileService.assertActiveContentImages(uniqueFileIds, userId)
+    const draft = await contentPublicationService.prepareDraft(userId, payload)
 
     const connection = await connectionPool.getConnection()
     try {
       await connection.beginTransaction()
-      const [result] = await connection.execute('INSERT INTO `content` (`user_id`, `body`, `status`) VALUES (?, ?, ?);', [userId, body || null, CONTENT_STATUS.PENDING])
+      const [result] = await connection.execute('INSERT INTO `content` (`user_id`, `body`, `status`) VALUES (?, ?, ?);', [userId, draft.body, CONTENT_STATUS.PENDING])
       const contentId = result.insertId
 
-      // 使用关联表保存内容标签和内容图片，方便后续扩展多对多关系。
-      for (const tagId of uniqueTagIds) await connection.execute('INSERT INTO `content_tag` (`content_id`, `tag_id`) VALUES (?, ?);', [contentId, tagId])
-      for (const fileId of uniqueFileIds) await connection.execute('INSERT INTO `content_file` (`content_id`, `file_id`) VALUES (?, ?);', [contentId, fileId])
+      // 内容资源关联由发布模块统一维护，避免创建和编辑路径规则分叉。
+      await contentPublicationService.replaceAssociations(connection, contentId, draft)
 
       await connection.commit()
       return this.buildDetail(await this.findById(contentId))
@@ -129,21 +110,13 @@ class ContentService {
     if (content.user_id !== userId) throw createError('FORBIDDEN')
     if (![CONTENT_STATUS.PENDING, CONTENT_STATUS.REJECTED].includes(content.status)) throw createError('INVALID_STATUS')
 
-    const { body } = payload
-    const uniqueTagIds = normalizeIdArray(payload.tagIds, 'tagIds')
-    const uniqueFileIds = normalizeIdArray(payload.fileIds, 'fileIds')
-    if ((!body || !String(body).trim()) && !uniqueFileIds.length) throw createError('PARAMS_ERROR', '内容正文和图片不能同时为空')
-    await tagService.assertEnabledTags(uniqueTagIds)
-    await fileService.assertActiveContentImages(uniqueFileIds, userId)
+    const draft = await contentPublicationService.prepareDraft(userId, payload)
 
     const connection = await connectionPool.getConnection()
     try {
       await connection.beginTransaction()
-      await connection.execute('UPDATE `content` SET `body` = ?, `status` = ?, `reject_reason` = NULL, `reviewer_id` = NULL, `reviewed_at` = NULL WHERE `id` = ?;', [body || null, CONTENT_STATUS.PENDING, contentId])
-      await connection.execute('DELETE FROM `content_tag` WHERE `content_id` = ?;', [contentId])
-      await connection.execute('DELETE FROM `content_file` WHERE `content_id` = ?;', [contentId])
-      for (const tagId of uniqueTagIds) await connection.execute('INSERT INTO `content_tag` (`content_id`, `tag_id`) VALUES (?, ?);', [contentId, tagId])
-      for (const fileId of uniqueFileIds) await connection.execute('INSERT INTO `content_file` (`content_id`, `file_id`) VALUES (?, ?);', [contentId, fileId])
+      await connection.execute('UPDATE `content` SET `body` = ?, `status` = ?, `reject_reason` = NULL, `reviewer_id` = NULL, `reviewed_at` = NULL WHERE `id` = ?;', [draft.body, CONTENT_STATUS.PENDING, contentId])
+      await contentPublicationService.replaceAssociations(connection, contentId, draft)
       await connection.commit()
       return this.buildDetail(await this.findById(contentId))
     } catch (error) {

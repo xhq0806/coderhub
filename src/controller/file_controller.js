@@ -1,5 +1,6 @@
 // 文件控制器负责头像图片、内容图片上传和后台文件管理响应。
 const fileService = require('../service/file_service')
+const fileLifecycleService = require('../service/file_lifecycle_service')
 const { FILE_USAGE } = require('../constants/status')
 const { success, pageSuccess } = require('../utils/response')
 
@@ -24,7 +25,7 @@ class FileController {
 
   // 后台删除违规文件，删除后不再允许业务引用。
   async deleteAdmin(ctx) {
-    const result = await fileService.deleteByAdmin(Number(ctx.params.id))
+    const result = await fileLifecycleService.deleteByAdmin(Number(ctx.params.id))
     success(ctx, result, '删除文件成功')
   }
 }

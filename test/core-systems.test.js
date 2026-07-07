@@ -2,7 +2,7 @@
 process.env.NODE_ENV = 'test'
 process.env.MYSQL_DATABASE = 'coderhub_test'
 process.env.JWT_SECRET = 'coderhub-test-secret'
-process.env.UPLOAD_DIR = 'uploads_test'
+process.env.UPLOAD_DIR = `uploads_test/run-${Date.now()}-${process.pid}`
 
 const fs = require('fs')
 const path = require('path')
@@ -48,8 +48,8 @@ async function initDatabase() {
   await connection.query(schema)
   await connection.end()
 
-  // 删除测试上传目录，验证上传中间件能在首次上传前自动创建目录。
-  fs.rmSync(path.resolve(__dirname, '../uploads_test'), { recursive: true, force: true })
+  // 每次测试使用独立上传目录，避免 Windows 文件锁影响历史目录清理。
+  fs.rmSync(path.resolve(__dirname, '..', process.env.UPLOAD_DIR), { recursive: true, force: true })
 }
 
 // 创建管理员账号，供后台接口测试使用。

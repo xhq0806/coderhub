@@ -10,8 +10,8 @@ const contentRouter = require('../router/content_router')
 const commentRouter = require('../router/comment_router')
 const adminRouter = require('../router/admin_router')
 const errorMiddleware = require('../middleware/error_middleware')
-const fileService = require('../service/file_service')
-const { UPLOAD_DIR, UPLOAD_PUBLIC_PATH } = require('../config/server')
+const fileLifecycleService = require('../service/file_lifecycle_service')
+const { UPLOAD_PUBLIC_PATH } = require('../config/server')
 
 const app = new Koa()
 
@@ -28,19 +28,9 @@ app.use(async (ctx, next) => {
     return
   }
 
-  // 静态访问先校验数据库状态，deleted 文件即使残留在磁盘也不能访问。
-  const activeFile = await fileService.findActiveByUrl(ctx.path)
-  if (!activeFile) {
-    ctx.status = 404
-    return
-  }
-
-  // 将公开 URL 映射到本地 uploads 目录，并用 path.relative 严格阻止路径穿越。
-  const relativePath = ctx.path.slice(UPLOAD_PUBLIC_PATH.length).replace(/^\//, '')
-  const uploadRoot = path.resolve(process.cwd(), UPLOAD_DIR)
-  const filePath = path.resolve(uploadRoot, relativePath)
-  const safeRelativePath = path.relative(uploadRoot, filePath)
-  if (safeRelativePath.startsWith('..') || path.isAbsolute(safeRelativePath) || !fs.existsSync(filePath)) {
+  // 文件生命周期模块统一完成数据库状态和磁盘路径校验。
+  const filePath = await fileLifecycleService.resolveServableDiskPath(ctx.path)
+  if (!filePath) {
     ctx.status = 404
     return
   }

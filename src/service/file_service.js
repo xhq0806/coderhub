@@ -1,8 +1,7 @@
-// 文件服务封装上传文件元信息保存、查询和后台删除逻辑。
-const fs = require('fs/promises')
+// 文件服务封装上传文件元信息保存、查询和引用校验逻辑。
 const path = require('path')
 const connectionPool = require('../app/database')
-const { UPLOAD_DIR, UPLOAD_PUBLIC_PATH } = require('../config/server')
+const { UPLOAD_PUBLIC_PATH } = require('../config/server')
 const { FILE_STATUS, FILE_USAGE } = require('../constants/status')
 const { createError, parsePage } = require('../utils/response')
 
@@ -76,39 +75,6 @@ class FileService {
     return { list, total: countRows[0].total, page, pageSize }
   }
 
-  // 根据文件 URL 还原磁盘路径，后台删除文件时同步移除物理文件。
-  resolveDiskPath(file) {
-    const relativePath = String(file.url || '').replace(new RegExp(`^${UPLOAD_PUBLIC_PATH}/?`), '')
-    return path.resolve(process.cwd(), UPLOAD_DIR, relativePath)
-  }
-
-  // 后台软删除文件并清理用户头像引用，静态访问层会按数据库状态拒绝旧 URL。
-  async deleteByAdmin(fileId) {
-    const file = await this.findActiveById(fileId)
-    if (!file) throw createError('NOT_FOUND', '文件不存在')
-
-    const connection = await connectionPool.getConnection()
-    try {
-      await connection.beginTransaction()
-      await connection.execute('UPDATE `file` SET `status` = ? WHERE `id` = ?;', [FILE_STATUS.DELETED, fileId])
-      await connection.execute('UPDATE `user` SET `avatar_file_id` = NULL WHERE `avatar_file_id` = ?;', [fileId])
-      await connection.commit()
-    } catch (error) {
-      await connection.rollback()
-      throw error
-    } finally {
-      connection.release()
-    }
-
-    // 磁盘文件删除失败不影响访问控制，因为静态层会根据数据库 deleted 状态拒绝旧 URL。
-    try {
-      await fs.unlink(this.resolveDiskPath(file))
-    } catch (error) {
-      if (error.code !== 'ENOENT') console.warn('删除磁盘文件失败:', error.message)
-    }
-
-    return { ...file, status: FILE_STATUS.DELETED }
-  }
 }
 
 module.exports = new FileService()
