@@ -17,6 +17,7 @@ module.exports = {
   deleteContent: contentController.deleteAdmin.bind(contentController),
   listComments: commentController.listAdmin.bind(commentController),
   deleteComment: commentController.deleteAdmin.bind(commentController),
+  listTags: tagController.listAdmin.bind(tagController),
   createTag: tagController.create.bind(tagController),
   updateTag: tagController.update.bind(tagController),
   enableTag: tagController.enable.bind(tagController),

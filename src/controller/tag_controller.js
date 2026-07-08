@@ -10,6 +10,12 @@ class TagController {
     pageSuccess(ctx, result)
   }
 
+  // 后台分页查询全部标签，支持按状态筛选。
+  async listAdmin(ctx) {
+    const result = await tagService.listAdmin(ctx.query || {})
+    pageSuccess(ctx, result)
+  }
+
   // 后台新增标签，名称必须唯一。
   async create(ctx) {
     const result = await tagService.createTag(ctx.request.body || {})

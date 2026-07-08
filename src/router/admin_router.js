@@ -25,6 +25,7 @@ adminRouter.get('/comments', adminController.listComments)
 adminRouter.delete('/comments/:id', adminController.deleteComment)
 
 // 后台标签维护接口。
+adminRouter.get('/tags', adminController.listTags)
 adminRouter.post('/tags', adminController.createTag)
 adminRouter.patch('/tags/:id', adminController.updateTag)
 adminRouter.patch('/tags/:id/enable', adminController.enableTag)

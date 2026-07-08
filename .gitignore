@@ -7,3 +7,7 @@
 /changes
 /uploads/
 /uploads_test/
+/web/node_modules/
+/web/dist/
+/web/.vite-dev.*.log
+/.backend.*.log

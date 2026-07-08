@@ -15,6 +15,24 @@ class TagService {
     return { list, total: countRows[0].total, page, pageSize }
   }
 
+  // 后台分页查询全部标签，允许管理员查看禁用标签并重新启用。
+  async listAdmin(query = {}) {
+    const { page, pageSize, offset } = parsePage(query)
+    const values = []
+    const conditions = []
+    if (query.status) {
+      conditions.push('status = ?')
+      values.push(query.status)
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+    const [list] = await connectionPool.execute(
+      `SELECT id, name, status, created_at AS createdAt, updated_at AS updatedAt FROM \`tag\` ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?;`,
+      [...values, pageSize, offset]
+    )
+    const [countRows] = await connectionPool.execute(`SELECT COUNT(*) AS total FROM \`tag\` ${where};`, values)
+    return { list, total: countRows[0].total, page, pageSize }
+  }
+
   // 按 ID 查询标签，用于后台修改和内容标签校验。
   async findById(tagId) {
     const [tags] = await connectionPool.execute('SELECT * FROM `tag` WHERE `id` = ?;', [tagId])
