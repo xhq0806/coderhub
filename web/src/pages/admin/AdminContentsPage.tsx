@@ -3,7 +3,7 @@ import { CheckCircle2, FileX2, RefreshCcw, SendToBack, Trash2 } from 'lucide-rea
 import { approveAdminContent, deleteAdminContent, listAdminContents, offlineAdminContent, rejectAdminContent } from '../../api/admin';
 import type { ContentItem, ContentStatus, PageResult } from '../../api/types';
 import { AdminActions, AdminStatusBadge, AdminTable } from '../../components/AdminTable';
-import { getErrorMessage } from '../../lib/errors';
+import { getErrorMessage, isForbiddenError } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
 
 const pageSize = 10;
@@ -14,14 +14,18 @@ export function AdminContentsPage() {
   const [result, setResult] = useState<PageResult<ContentItem> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [forbidden, setForbidden] = useState(false);
   const [notice, setNotice] = useState('');
 
   async function loadContents() {
     setLoading(true);
     setError('');
+    setForbidden(false);
     try {
       setResult(await listAdminContents({ page, pageSize, status }));
     } catch (err) {
+      // by AI.Coding：后台接口返回 -1006 时切换到明确无权限状态，而不是普通加载失败。
+      setForbidden(isForbiddenError(err));
       setError(getErrorMessage(err, '内容列表加载失败'));
     } finally {
       setLoading(false);
@@ -64,6 +68,7 @@ export function AdminContentsPage() {
       total={result?.total ?? 0}
       onPageChange={setPage}
       onRetry={loadContents}
+      forbidden={forbidden}
       toolbar={(
         <>
           <select className="admin-select" value={status} onChange={(event) => { setPage(1); setStatus(event.target.value as ContentStatus | ''); }}>

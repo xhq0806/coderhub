@@ -1,4 +1,4 @@
-import { AUTH_SESSION_CLEARED_EVENT, clearStoredSession, readStoredSession } from '../auth/session';
+import { AUTH_SESSION_CLEARED_EVENT, clearStoredSession, readStoredSession, saveAuthNotice } from '../auth/session';
 import type { ApiCode } from '../api/types';
 
 interface ApiEnvelope<T> {
@@ -71,9 +71,12 @@ function parseEnvelope<T>(value: unknown): ApiEnvelope<T> | null {
   return value as unknown as ApiEnvelope<T>;
 }
 
-function notifyAuthCleared(message: string) {
+// by AI.Coding：认证失效时先保存明确提示再清理 token，让登录页能解释跳转原因。
+function notifyAuthCleared(message: string, code: number) {
+  const notice = code === -1005 ? '账号已被禁用，请联系管理员处理。' : message;
+  saveAuthNotice(notice);
   clearStoredSession();
-  window.dispatchEvent(new CustomEvent(AUTH_SESSION_CLEARED_EVENT, { detail: message }));
+  window.dispatchEvent(new CustomEvent(AUTH_SESSION_CLEARED_EVENT, { detail: notice }));
 }
 
 export async function request<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
@@ -103,7 +106,7 @@ export async function request<T>(path: string, options: ApiRequestOptions = {}):
   if (!response.ok || !envelope || envelope.code !== 0) {
     const code = envelope?.code ?? response.status;
     const message = envelope?.message || response.statusText || '请求失败';
-    if (authErrorCodes.has(code)) notifyAuthCleared(message);
+    if (authErrorCodes.has(code)) notifyAuthCleared(message, code);
     throw new ApiError(message, code, response.status, envelope?.data);
   }
 

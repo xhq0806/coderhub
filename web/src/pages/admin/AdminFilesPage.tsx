@@ -3,7 +3,7 @@ import { ExternalLink, RefreshCcw, Trash2 } from 'lucide-react';
 import { deleteAdminFile, listAdminFiles } from '../../api/admin';
 import type { FileItem, FileUsageType, PageResult } from '../../api/types';
 import { AdminActions, AdminStatusBadge, AdminTable } from '../../components/AdminTable';
-import { getErrorMessage } from '../../lib/errors';
+import { getErrorMessage, isForbiddenError } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
 import { resolveAssetUrl } from '../../lib/request';
 
@@ -15,14 +15,18 @@ export function AdminFilesPage() {
   const [result, setResult] = useState<PageResult<FileItem> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [forbidden, setForbidden] = useState(false);
   const [notice, setNotice] = useState('');
 
   async function loadFiles() {
     setLoading(true);
     setError('');
+    setForbidden(false);
     try {
       setResult(await listAdminFiles({ page, pageSize, usageType }));
     } catch (err) {
+      // by AI.Coding：后台接口返回 -1006 时切换到明确无权限状态，而不是普通加载失败。
+      setForbidden(isForbiddenError(err));
       setError(getErrorMessage(err, '文件列表加载失败'));
     } finally {
       setLoading(false);
@@ -57,6 +61,7 @@ export function AdminFilesPage() {
       total={result?.total ?? 0}
       onPageChange={setPage}
       onRetry={loadFiles}
+      forbidden={forbidden}
       toolbar={(
         <>
           <select className="admin-select" value={usageType} onChange={(event) => { setPage(1); setUsageType(event.target.value as FileUsageType | ''); }}>

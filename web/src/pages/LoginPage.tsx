@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LogIn, UserPlus } from 'lucide-react';
+import { consumeAuthNotice } from '../auth/session';
 import { useAuth } from '../auth/useAuth';
-import { getErrorMessage } from '../lib/errors';
+import { getErrorMessage, isDisabledAccountError } from '../lib/errors';
 
 interface LocationState {
   from?: string;
@@ -18,6 +19,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [authNotice] = useState(() => consumeAuthNotice());
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,7 +29,8 @@ export function LoginPage() {
       await login({ name: name.trim(), password });
       navigate(state?.from || '/my/contents', { replace: true });
     } catch (err) {
-      setError(getErrorMessage(err, '登录失败'));
+      // by AI.Coding：账号禁用必须给出稳定提示，不依赖后端文案是否变化。
+      setError(isDisabledAccountError(err) ? '账号已被禁用，请联系管理员处理。' : getErrorMessage(err, '登录失败'));
     } finally {
       setSubmitting(false);
     }
@@ -46,6 +49,7 @@ export function LoginPage() {
           <p className="muted">进入你的 coderhub 账号</p>
         </div>
         {state?.notice ? <p className="success-text">{state.notice}</p> : null}
+        {authNotice ? <p className="form-error">{authNotice}</p> : null}
         <label className="form-field">
           <span>用户名</span>
           <input className="input" value={name} autoComplete="username" onChange={(event) => setName(event.target.value)} />
