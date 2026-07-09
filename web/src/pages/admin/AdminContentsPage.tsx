@@ -1,3 +1,4 @@
+// pages/admin/AdminContentsPage.tsx 模块，承载前端对应功能的页面、组件或请求封装。
 import { useEffect, useState } from 'react';
 import { CheckCircle2, FileX2, RefreshCcw, SendToBack, Trash2 } from 'lucide-react';
 import { approveAdminContent, deleteAdminContent, listAdminContents, offlineAdminContent, rejectAdminContent } from '../../api/admin';
@@ -24,7 +25,7 @@ export function AdminContentsPage() {
     try {
       setResult(await listAdminContents({ page, pageSize, status }));
     } catch (err) {
-      // by AI.Coding：后台接口返回 -1006 时切换到明确无权限状态，而不是普通加载失败。
+      // 后台接口返回 -1006 时切换到明确无权限状态，而不是普通加载失败。
       setForbidden(isForbiddenError(err));
       setError(getErrorMessage(err, '内容列表加载失败'));
     } finally {

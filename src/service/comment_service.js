@@ -1,7 +1,8 @@
 // 评论服务封装评论、回复、分页查询和按权限删除业务。
 const connectionPool = require('../app/database')
 const contentService = require('./content_service')
-const { COMMENT_STATUS, CONTENT_STATUS } = require('../constants/status')
+const notificationService = require('./notification_service')
+const { COMMENT_STATUS, CONTENT_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TARGET } = require('../constants/status')
 const { createError, parsePage } = require('../utils/response')
 
 // 转换评论字段命名，统一接口返回结构。
@@ -31,7 +32,9 @@ class CommentService {
     const content = await contentService.findById(contentId)
     if (!content || content.status !== CONTENT_STATUS.PUBLISHED) throw createError('NOT_FOUND', '内容不存在或未公开')
     const [result] = await connectionPool.execute('INSERT INTO `comment` (`content_id`, `user_id`, `body`, `status`) VALUES (?, ?, ?, ?);', [contentId, userId, body, COMMENT_STATUS.VISIBLE])
-    return toCommentItem(await this.findById(result.insertId))
+    const comment = toCommentItem(await this.findById(result.insertId))
+    await notificationService.createNotification({ userId: content.user_id, actorUserId: userId, type: NOTIFICATION_TYPE.COMMENT, title: '你的动态有新评论', body: comment.body, targetType: NOTIFICATION_TARGET.COMMENT, targetId: comment.id })
+    return comment
   }
 
   // 回复可见评论，父评论不存在或已删除时拒绝创建回复。
@@ -42,7 +45,12 @@ class CommentService {
     const content = await contentService.findById(parent.content_id)
     if (!content || content.status !== CONTENT_STATUS.PUBLISHED) throw createError('NOT_FOUND', '内容不存在或未公开')
     const [result] = await connectionPool.execute('INSERT INTO `comment` (`content_id`, `user_id`, `parent_id`, `body`, `status`) VALUES (?, ?, ?, ?, ?);', [parent.content_id, userId, parentCommentId, body, COMMENT_STATUS.VISIBLE])
-    return toCommentItem(await this.findById(result.insertId))
+    const reply = toCommentItem(await this.findById(result.insertId))
+    const recipients = [...new Set([parent.user_id, content.user_id])]
+    for (const recipientId of recipients) {
+      await notificationService.createNotification({ userId: recipientId, actorUserId: userId, type: NOTIFICATION_TYPE.REPLY, title: '你收到了新的回复', body: reply.body, targetType: NOTIFICATION_TARGET.COMMENT, targetId: reply.id })
+    }
+    return reply
   }
 
   // 查询公开内容下可见评论分页列表。

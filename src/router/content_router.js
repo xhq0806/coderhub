@@ -2,7 +2,7 @@
 const KoaRouter = require('@koa/router')
 const contentController = require('../controller/content_controller')
 const commentController = require('../controller/comment_controller')
-const { verifyAuth } = require('../middleware/auth_middleware')
+const { verifyAuth, optionalAuth } = require('../middleware/auth_middleware')
 
 const contentRouter = new KoaRouter({ prefix: '/contents' })
 
@@ -10,8 +10,8 @@ const contentRouter = new KoaRouter({ prefix: '/contents' })
 contentRouter.post('/', verifyAuth, contentController.create)
 
 // 公开内容列表和详情允许访客访问。
-contentRouter.get('/', contentController.listPublished)
-contentRouter.get('/:id', contentController.detail)
+contentRouter.get('/', optionalAuth, contentController.listPublished)
+contentRouter.get('/:id', optionalAuth, contentController.detail)
 
 // 作者只能编辑或删除自己的内容。
 contentRouter.patch('/:id', verifyAuth, contentController.updateMine)

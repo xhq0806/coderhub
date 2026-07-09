@@ -105,3 +105,56 @@ CREATE TABLE IF NOT EXISTS `content_file` (
   CONSTRAINT `fk_content_file_content` FOREIGN KEY (`content_id`) REFERENCES `content` (`id`),
   CONSTRAINT `fk_content_file_file` FOREIGN KEY (`file_id`) REFERENCES `file` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='内容文件关联表';
+
+-- by AI.Coding：内容点赞表记录用户对公开动态的偏好，联合主键保证重复点赞天然幂等。
+CREATE TABLE IF NOT EXISTS `content_like` (
+  `content_id` BIGINT UNSIGNED NOT NULL COMMENT '被点赞内容 ID',
+  `user_id` BIGINT UNSIGNED NOT NULL COMMENT '点赞用户 ID',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '点赞时间',
+  PRIMARY KEY (`content_id`, `user_id`),
+  KEY `idx_content_like_user_created` (`user_id`, `created_at`),
+  CONSTRAINT `fk_content_like_content` FOREIGN KEY (`content_id`) REFERENCES `content` (`id`),
+  CONSTRAINT `fk_content_like_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='内容点赞表';
+
+-- by AI.Coding：内容收藏表记录用户剪藏内容的关系，供我的收藏和互动计数查询。
+CREATE TABLE IF NOT EXISTS `content_favorite` (
+  `content_id` BIGINT UNSIGNED NOT NULL COMMENT '被收藏内容 ID',
+  `user_id` BIGINT UNSIGNED NOT NULL COMMENT '收藏用户 ID',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
+  PRIMARY KEY (`content_id`, `user_id`),
+  KEY `idx_content_favorite_user_created` (`user_id`, `created_at`),
+  CONSTRAINT `fk_content_favorite_content` FOREIGN KEY (`content_id`) REFERENCES `content` (`id`),
+  CONSTRAINT `fk_content_favorite_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='内容收藏表';
+
+-- by AI.Coding：用户关注表保存当前关注关系，物理删除表示取消关注。
+CREATE TABLE IF NOT EXISTS `user_follow` (
+  `follower_id` BIGINT UNSIGNED NOT NULL COMMENT '关注发起用户 ID',
+  `following_id` BIGINT UNSIGNED NOT NULL COMMENT '被关注用户 ID',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '关注时间',
+  PRIMARY KEY (`follower_id`, `following_id`),
+  KEY `idx_user_follow_following_created` (`following_id`, `created_at`),
+  CONSTRAINT `fk_user_follow_follower` FOREIGN KEY (`follower_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_user_follow_following` FOREIGN KEY (`following_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户关注表';
+
+-- by AI.Coding：站内通知表保存事件快照，目标删除后仍可解释历史通知。
+CREATE TABLE IF NOT EXISTS `notification` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '通知主键',
+  `user_id` BIGINT UNSIGNED NOT NULL COMMENT '接收用户 ID',
+  `actor_user_id` BIGINT UNSIGNED NULL COMMENT '触发事件用户 ID',
+  `type` VARCHAR(30) NOT NULL COMMENT '通知类型',
+  `title` VARCHAR(100) NOT NULL COMMENT '通知标题',
+  `body` VARCHAR(300) NULL COMMENT '通知正文',
+  `target_type` VARCHAR(30) NOT NULL COMMENT '目标类型：content/comment/user',
+  `target_id` BIGINT UNSIGNED NOT NULL COMMENT '目标实体 ID',
+  `status` VARCHAR(20) NOT NULL DEFAULT 'unread' COMMENT '通知状态：unread/read',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `read_at` DATETIME NULL COMMENT '阅读时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_notification_user_status_created` (`user_id`, `status`, `created_at`),
+  KEY `idx_notification_target` (`target_type`, `target_id`),
+  CONSTRAINT `fk_notification_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_notification_actor` FOREIGN KEY (`actor_user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='站内通知表';

@@ -34,6 +34,16 @@ async function verifyAuth(ctx, next) {
   await next()
 }
 
+// by AI.Coding：可选登录校验用于公开接口读取当前用户互动状态，缺少 token 时保持访客身份。
+async function optionalAuth(ctx, next) {
+  const authorization = ctx.headers.authorization || ''
+  if (!authorization) {
+    await next()
+    return
+  }
+  await verifyAuth(ctx, next)
+}
+
 // 管理员校验建立在登录校验之后，普通用户访问后台统一返回无权限。
 async function verifyAdmin(ctx, next) {
   await verifyAuth(ctx, async () => {
@@ -46,5 +56,6 @@ async function verifyAdmin(ctx, next) {
 
 module.exports = {
   verifyAuth,
+  optionalAuth,
   verifyAdmin
 }

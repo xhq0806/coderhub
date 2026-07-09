@@ -1,3 +1,4 @@
+// 文件 API 封装，负责头像和内容图片上传请求。
 import { request } from '../lib/request';
 import type { FileItem } from './types';
 

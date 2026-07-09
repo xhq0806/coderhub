@@ -1,3 +1,4 @@
+// pages/admin/AdminTagsPage.tsx 模块，承载前端对应功能的页面、组件或请求封装。
 import { useEffect, useState } from 'react';
 import { CheckCircle2, CircleSlash, PenSquare, Plus, RefreshCcw } from 'lucide-react';
 import { createAdminTag, disableAdminTag, enableAdminTag, listAdminTags, updateAdminTag } from '../../api/admin';
@@ -25,7 +26,7 @@ export function AdminTagsPage() {
     try {
       setResult(await listAdminTags({ page, pageSize, status }));
     } catch (err) {
-      // by AI.Coding：后台接口返回 -1006 时切换到明确无权限状态，而不是普通加载失败。
+      // 后台接口返回 -1006 时切换到明确无权限状态，而不是普通加载失败。
       setForbidden(isForbiddenError(err));
       setError(getErrorMessage(err, '标签列表加载失败'));
     } finally {

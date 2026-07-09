@@ -1,3 +1,4 @@
+// 管理端布局组件，提供后台导航、退出登录和页面框架。
 import { NavLink, Outlet } from 'react-router-dom';
 import { Files, Gauge, LogOut, MessageSquareWarning, Newspaper, Shield, Tags, UsersRound } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';

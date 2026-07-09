@@ -1,3 +1,4 @@
+// 注册页，负责新用户账号创建和注册后的登录引导。
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogIn, UserPlus } from 'lucide-react';

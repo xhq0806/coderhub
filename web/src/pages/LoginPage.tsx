@@ -1,3 +1,4 @@
+// pages/LoginPage.tsx 模块，承载前端对应功能的页面、组件或请求封装。
 import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LogIn, UserPlus } from 'lucide-react';
@@ -29,7 +30,7 @@ export function LoginPage() {
       await login({ name: name.trim(), password });
       navigate(state?.from || '/my/contents', { replace: true });
     } catch (err) {
-      // by AI.Coding：账号禁用必须给出稳定提示，不依赖后端文案是否变化。
+      // 账号禁用必须给出稳定提示，不依赖后端文案是否变化。
       setError(isDisabledAccountError(err) ? '账号已被禁用，请联系管理员处理。' : getErrorMessage(err, '登录失败'));
     } finally {
       setSubmitting(false);

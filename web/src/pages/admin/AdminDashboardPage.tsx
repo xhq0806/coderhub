@@ -1,3 +1,4 @@
+// pages/admin/AdminDashboardPage.tsx 模块，承载前端对应功能的页面、组件或请求封装。
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Files, MessageSquareWarning, Newspaper, Tags, UsersRound } from 'lucide-react';
@@ -37,7 +38,7 @@ export function AdminDashboardPage() {
           { label: '文件', value: files.total, to: '/admin/files', icon: Files }
         ]);
       } catch (err) {
-        // by AI.Coding：总览页聚合后台接口时同样识别 -1006，避免只展示普通错误条。
+        // 总览页聚合后台接口时同样识别 -1006，避免只展示普通错误条。
         setForbidden(isForbiddenError(err));
         setError(getErrorMessage(err, '后台总览加载失败'));
       }

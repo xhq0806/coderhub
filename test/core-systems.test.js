@@ -240,6 +240,83 @@ async function testDuplicateTagIdsAccepted(server, userToken, tagId) {
   assert.strictEqual(assertSuccess(response).status, 'pending')
 }
 
+// 测试第三阶段产品增强：搜索、点赞收藏、关注主页和通知主链路。
+async function testProductEnhancement(server, userToken, content) {
+  await request(server).post('/users').send({ name: 'carol', password: '123456' }).expect(200)
+  const actorData = await login(server, 'carol', '123456')
+
+  const searchRes = await request(server).get('/contents?keyword=Koa&sort=latest').expect(200)
+  assert.strictEqual(assertSuccess(searchRes).total, 1)
+
+  const likeRes = await request(server)
+    .post(`/contents/${content.id}/likes`)
+    .set('Authorization', `Bearer ${actorData.token}`)
+    .expect(200)
+  const likeState = assertSuccess(likeRes)
+  assert.strictEqual(likeState.viewerLiked, true)
+  assert.strictEqual(likeState.likeCount, 1)
+
+  const favoriteRes = await request(server)
+    .post(`/contents/${content.id}/favorites`)
+    .set('Authorization', `Bearer ${actorData.token}`)
+    .expect(200)
+  assert.strictEqual(assertSuccess(favoriteRes).viewerFavorited, true)
+
+  const favoritesRes = await request(server)
+    .get('/users/me/favorites')
+    .set('Authorization', `Bearer ${actorData.token}`)
+    .expect(200)
+  assert.strictEqual(assertSuccess(favoritesRes).total, 1)
+
+  const profileRes = await request(server).get('/users/1/profile').set('Authorization', `Bearer ${actorData.token}`).expect(200)
+  assert.strictEqual(assertSuccess(profileRes).viewerFollowing, false)
+
+  const followRes = await request(server)
+    .post('/users/1/follow')
+    .set('Authorization', `Bearer ${actorData.token}`)
+    .expect(200)
+  assert.strictEqual(assertSuccess(followRes).viewerFollowing, true)
+
+  const selfFollowRes = await request(server)
+    .post('/users/3/follow')
+    .set('Authorization', `Bearer ${actorData.token}`)
+    .expect(400)
+  assert.strictEqual(selfFollowRes.body.code, -1001)
+
+  await request(server)
+    .post(`/contents/${content.id}/comments`)
+    .set('Authorization', `Bearer ${actorData.token}`)
+    .send({ body: '第三阶段互动评论' })
+    .expect(200)
+
+  const notificationsRes = await request(server)
+    .get('/notifications')
+    .set('Authorization', `Bearer ${userToken}`)
+    .expect(200)
+  const notifications = assertSuccess(notificationsRes)
+  assert.ok(notifications.total >= 4)
+
+  const unreadRes = await request(server)
+    .get('/notifications/unread-count')
+    .set('Authorization', `Bearer ${userToken}`)
+    .expect(200)
+  assert.ok(assertSuccess(unreadRes).unreadCount >= 4)
+
+  await request(server)
+    .patch('/notifications/read-all')
+    .set('Authorization', `Bearer ${userToken}`)
+    .expect(200)
+
+  await request(server)
+    .delete(`/contents/${content.id}/likes`)
+    .set('Authorization', `Bearer ${actorData.token}`)
+    .expect(200)
+  await request(server)
+    .delete(`/contents/${content.id}/favorites`)
+    .set('Authorization', `Bearer ${actorData.token}`)
+    .expect(200)
+}
+
 // 测试非法 tagIds 和 fileIds 参数会返回参数错误，不会抛出数据库或运行时 500。
 async function testInvalidIdArrays(server, token) {
   const invalidTagRes = await request(server)
@@ -276,7 +353,7 @@ async function testGovernancePaths(server, adminToken, userToken, tag, content, 
     .set('Authorization', `Bearer ${userToken}`)
     .expect(200)
   const commentsAfterDelete = await request(server).get(`/contents/${content.id}/comments`).expect(200)
-  assert.strictEqual(assertSuccess(commentsAfterDelete).total, 1)
+  assert.strictEqual(assertSuccess(commentsAfterDelete).total, 2)
 
   await request(server)
     .patch(`/admin/contents/${content.id}/offline`)
@@ -322,6 +399,7 @@ async function main() {
   await testDeletedStatusBlocksStaticAccess(server, residualFile)
   await testDeletingAvatarClearsProfile(server, adminData.token, loginData.token)
   await testDuplicateTagIdsAccepted(server, loginData.token, tag.id)
+  await testProductEnhancement(server, loginData.token, content)
   await testInvalidIdArrays(server, loginData.token)
   await testDeletedFileNotAccessible(server, adminData.token, contentImage)
   await testFileOwnership(server, loginData.token, tag)

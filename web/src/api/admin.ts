@@ -1,3 +1,4 @@
+// 管理端 API 封装，统一维护后台用户、内容、评论、标签和文件治理请求。
 import { request } from '../lib/request';
 import type { CommentItem, ContentItem, ContentStatus, FileItem, FileUsageType, PageResult, TagItem, UserProfile, UserStatus } from './types';
 

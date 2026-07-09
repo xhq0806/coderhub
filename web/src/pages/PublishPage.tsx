@@ -1,3 +1,4 @@
+// 发布动态页，负责正文、标签、图片上传和发布提交。
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, PenLine, Send, Tags } from 'lucide-react';
@@ -9,6 +10,7 @@ import { FileUploader } from '../components/FileUploader';
 import { getErrorMessage } from '../lib/errors';
 import { resolveAssetUrl } from '../lib/request';
 
+// 发布页管理动态草稿、标签选择、图片列表和提交状态。
 export function PublishPage() {
   const navigate = useNavigate();
   const [body, setBody] = useState('');
@@ -22,10 +24,12 @@ export function PublishPage() {
     listTags({ page: 1, pageSize: 100 }).then((result) => setTags(result.list)).catch(() => setTags([]));
   }, []);
 
+  // 标签按钮支持多选和取消选择，最终以 ID 列表提交。
   function toggleTag(tagId: number) {
     setSelectedTagIds((current) => current.includes(tagId) ? current.filter((id) => id !== tagId) : [...current, tagId]);
   }
 
+  // 发布前校验正文和图片不能同时为空，成功后跳转我的内容页查看审核状态。
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextBody = body.trim();

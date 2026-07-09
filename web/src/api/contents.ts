@@ -1,3 +1,4 @@
+// 内容 API 封装，负责公开内容、我的内容、用户主页内容和发布编辑请求。
 import { request } from '../lib/request';
 import type { ContentDetail, ContentItem, ContentPayload, ListContentParams, PageResult } from './types';
 
@@ -11,6 +12,10 @@ export function getPublishedContent(id: number) {
 
 export function listMyContents(params: ListContentParams = {}) {
   return request<PageResult<ContentItem>>('/users/me/contents', { params });
+}
+
+export function listUserContents(userId: number, params: ListContentParams = {}) {
+  return request<PageResult<ContentItem>>('/users/' + userId + '/contents', { params });
 }
 
 export function createContent(payload: ContentPayload) {

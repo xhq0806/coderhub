@@ -2,6 +2,7 @@
 const KoaRouter = require('@koa/router')
 const userController = require('../controller/user_controller')
 const contentController = require('../controller/content_controller')
+const interactionController = require('../controller/interaction_controller')
 const { verifyAuth } = require('../middleware/auth_middleware')
 
 const userRouter = new KoaRouter()
@@ -16,7 +17,8 @@ userRouter.post('/login', userController.login)
 userRouter.get('/users/me', verifyAuth, userController.me)
 userRouter.patch('/users/me', verifyAuth, userController.updateMe)
 
-// 当前用户内容列表接口，作者可查看自己的非公开内容状态。
+// 当前用户内容和收藏列表接口。
 userRouter.get('/users/me/contents', verifyAuth, contentController.listMine)
+userRouter.get('/users/me/favorites', verifyAuth, interactionController.listFavorites)
 
 module.exports = userRouter

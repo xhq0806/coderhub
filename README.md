@@ -10,9 +10,9 @@ coderhub 是一个面向程序员的生活动态分享平台，当前包含 Node
 - 标签系统：用户端查询启用标签，后台新增、修改、启用、禁用标签。
 - 文件系统：头像图片和内容图片上传，后台文件查询和删除，删除后旧 URL 不再可访问。
 - 后台管理：管理员分页管理用户、内容、评论、标签和文件。
-- 用户端前端：公开动态浏览、注册登录、图片上传、发布动态、我的内容、评论回复和个人资料维护。
+- 用户端前端：公开动态浏览、注册登录、图片上传、发布动态、我的内容、评论回复、个人资料维护、搜索筛选、点赞收藏、用户关注、个人主页和站内通知。
 
-当前不包含私信、关注、点赞、收藏、消息通知、搜索、推荐算法、第三方登录、短信/邮箱验证、找回密码和细粒度 RBAC。
+当前不包含私信、推荐算法、第三方登录、短信/邮箱验证、找回密码和细粒度 RBAC。
 
 ## 技术栈
 
@@ -100,7 +100,7 @@ npm start
 npm run web:dev
 ```
 
-前端默认运行在 `http://localhost:5173`。开发环境默认通过 Vite proxy 转发 `/users`、`/login`、`/contents`、`/comments`、`/tags`、`/files` 和 `/uploads` 到 `http://localhost:8000`，因此本地联调时无需后端额外配置 CORS。
+前端默认运行在 `http://localhost:5173`。开发环境默认通过 Vite proxy 转发 `/users`、`/login`、`/contents`、`/comments`、`/tags`、`/files`、`/interactions`、`/notifications` 和 `/uploads` 到 `http://localhost:8000`，因此本地联调时无需后端额外配置 CORS。
 
 如需让前端直连其它后端地址，在 `web/.env` 中配置：
 
@@ -183,18 +183,21 @@ Authorization: Bearer <token>
 
 ## 用户端前端
 
-前端工程位于 `web/`，本阶段只实现普通用户端，不包含后台管理页面。
+前端工程位于 `web/`，包含普通用户端和管理员治理端。
 
 已实现页面：
 
 | 路由 | 说明 |
 |------|------|
-| `/` | 公开动态列表，支持分页和标签筛选 |
-| `/contents/:id` | 公开动态详情、图片、标签和评论 |
+| `/` | 公开动态列表，支持分页、关键词搜索、标签筛选和最新/最热排序 |
+| `/contents/:id` | 公开动态详情、图片、标签、互动和评论 |
+| `/users/:id` | 用户公开主页、关注/粉丝数和公开动态 |
 | `/register` | 用户注册 |
 | `/login` | 用户登录 |
 | `/publish` | 登录用户发布待审核动态 |
 | `/my/contents` | 我的内容状态、驳回原因、编辑和删除 |
+| `/my/favorites` | 我的收藏内容列表 |
+| `/notifications` | 站内通知、未读状态和已读操作 |
 | `/profile` | 昵称、头像和简介维护 |
 | `/admin` | 管理端总览，仅管理员可访问 |
 | `/admin/users` | 用户禁用和恢复 |
@@ -203,7 +206,7 @@ Authorization: Bearer <token>
 | `/admin/tags` | 标签新增、修改、启用和禁用 |
 | `/admin/files` | 上传文件预览和删除 |
 
-前端统一按后端 `{ code, message, data }` 响应解析，登录过期或账号禁用时会清理本地登录态。
+前端统一按后端 `{ code, message, data }` 响应解析，登录过期或账号禁用时会清理本地登录态。第三阶段用户端支持搜索筛选、点赞收藏、用户主页关注和站内通知。
 
 管理端复用登录页和 token。只有 `role = admin` 的账号可以访问 `/admin` 路由组；普通用户访问会显示无权限状态。
 
@@ -218,6 +221,11 @@ Authorization: Bearer <token>
 | GET | `/users/me` | 是 | 查询当前用户资料 |
 | PATCH | `/users/me` | 是 | 修改昵称、头像、简介 |
 | GET | `/users/me/contents` | 是 | 查询自己的内容列表，可查看待审核和驳回内容 |
+| GET | `/users/me/favorites` | 是 | 查询自己收藏的公开内容 |
+| GET | `/users/:id/profile` | 否 | 查询用户公开主页资料、关注数和粉丝数 |
+| GET | `/users/:id/contents` | 否 | 查询指定用户已公开动态 |
+| POST | `/users/:id/follow` | 是 | 关注用户 |
+| DELETE | `/users/:id/follow` | 是 | 取消关注用户 |
 
 注册请求示例：
 
@@ -258,8 +266,8 @@ Authorization: Bearer <token>
 | 方法 | 路径 | 认证 | 说明 |
 |------|------|------|------|
 | POST | `/contents` | 是 | 发布动态，创建后进入待审核 |
-| GET | `/contents` | 否 | 分页查询已公开内容 |
-| GET | `/contents/:id` | 否 | 查询已公开内容详情 |
+| GET | `/contents` | 否 | 分页查询已公开内容，支持关键词、标签和排序 |
+| GET | `/contents/:id` | 否 | 查询已公开内容详情，包含互动计数和当前用户互动状态 |
 | PATCH | `/contents/:id` | 是 | 作者编辑自己的待审核或已驳回内容 |
 | DELETE | `/contents/:id` | 是 | 作者删除自己的内容 |
 | POST | `/contents/:id/comments` | 是 | 对公开内容发表评论 |
@@ -295,6 +303,28 @@ Authorization: Bearer <token>
 | DELETE | `/comments/:id` | 是 | 删除评论 |
 
 评论作者可以删除自己的评论；内容作者可以删除自己内容下的评论。被删除的评论不会在普通用户评论列表中展示，也不能继续作为回复目标。
+
+### 互动
+
+| 方法 | 路径 | 认证 | 说明 |
+|------|------|------|------|
+| POST | `/contents/:id/likes` | 是 | 点赞公开内容 |
+| DELETE | `/contents/:id/likes` | 是 | 取消点赞 |
+| POST | `/contents/:id/favorites` | 是 | 收藏公开内容 |
+| DELETE | `/contents/:id/favorites` | 是 | 取消收藏 |
+
+点赞和收藏只允许作用于已公开内容，重复操作按幂等处理。首次点赞、收藏会向内容作者生成通知，用户自己的内容不会给自己发送通知。
+
+### 通知
+
+| 方法 | 路径 | 认证 | 说明 |
+|------|------|------|------|
+| GET | `/notifications` | 是 | 查询当前用户通知列表 |
+| GET | `/notifications/unread-count` | 是 | 查询当前用户未读通知数 |
+| PATCH | `/notifications/:id/read` | 是 | 标记单条通知已读 |
+| PATCH | `/notifications/read-all` | 是 | 标记当前用户全部通知已读 |
+
+通知覆盖审核通过、审核驳回、评论、回复、点赞、收藏和关注等业务事件。用户只能读取和操作自己的通知。
 
 ## 后台接口
 

@@ -1,3 +1,4 @@
+/* 管理端样式表，定义后台布局、卡片、表格和治理页面视觉。 */
 .admin-shell {
   display: grid;
   grid-template-columns: 276px minmax(0, 1fr);

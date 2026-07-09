@@ -1,3 +1,4 @@
+// 评论 API 封装，负责评论、回复和删除评论请求。
 import { request } from '../lib/request';
 import type { CommentItem, CommentPayload, PageResult } from './types';
 

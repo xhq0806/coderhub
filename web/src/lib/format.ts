@@ -1,3 +1,4 @@
+// 格式化工具，集中处理日期、内容状态和文件大小展示文案。
 import type { ContentStatus } from '../api/types';
 
 const labels: Record<ContentStatus, string> = {

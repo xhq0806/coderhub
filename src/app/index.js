@@ -9,6 +9,9 @@ const fileRouter = require('../router/file_router')
 const contentRouter = require('../router/content_router')
 const commentRouter = require('../router/comment_router')
 const adminRouter = require('../router/admin_router')
+const interactionRouter = require('../router/interaction_router')
+const followRouter = require('../router/follow_router')
+const notificationRouter = require('../router/notification_router')
 const errorMiddleware = require('../middleware/error_middleware')
 const fileLifecycleService = require('../service/file_lifecycle_service')
 const { UPLOAD_PUBLIC_PATH } = require('../config/server')
@@ -40,7 +43,7 @@ app.use(async (ctx, next) => {
 })
 
 // 注册用户端和后台业务路由。
-const routers = [userRouter, tagRouter, fileRouter, contentRouter, commentRouter, adminRouter]
+const routers = [userRouter, tagRouter, fileRouter, contentRouter, commentRouter, interactionRouter, followRouter, notificationRouter, adminRouter]
 for (const router of routers) {
   app.use(router.routes())
   app.use(router.allowedMethods())

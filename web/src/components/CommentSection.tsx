@@ -1,3 +1,4 @@
+// 评论区组件，负责发表评论、回复评论、权限删除和登录回跳。
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MessageCircle, Reply, Send, Trash2 } from 'lucide-react';
@@ -7,6 +8,7 @@ import { useAuth } from '../auth/useAuth';
 import { getErrorMessage } from '../lib/errors';
 import { formatDate } from '../lib/format';
 
+// 评论区入参包含内容归属、当前评论列表和刷新回调。
 interface CommentSectionProps {
   contentId: number;
   contentUserId: number;
@@ -14,6 +16,7 @@ interface CommentSectionProps {
   onChanged: () => Promise<void> | void;
 }
 
+// 评论区组件统一处理评论、回复、删除和未登录回跳。
 export function CommentSection({ contentId, contentUserId, comments, onChanged }: CommentSectionProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -24,12 +27,14 @@ export function CommentSection({ contentId, contentUserId, comments, onChanged }
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // 评论类操作必须登录，未登录时保留当前入口跳转登录页。
   function requireLogin() {
     if (user) return true;
     navigate('/login', { state: { from: location.pathname + location.search } });
     return false;
   }
 
+  // 提交一级评论前校验空内容，成功后清空输入并刷新评论列表。
   async function handleSubmit() {
     if (!requireLogin()) return;
     const nextBody = body.trim();
@@ -51,6 +56,7 @@ export function CommentSection({ contentId, contentUserId, comments, onChanged }
     }
   }
 
+  // 提交回复前校验回复内容，成功后关闭当前回复框。
   async function handleReply(commentId: number) {
     if (!requireLogin()) return;
     const nextBody = replyBody.trim();
@@ -73,6 +79,7 @@ export function CommentSection({ contentId, contentUserId, comments, onChanged }
     }
   }
 
+  // 删除评论后重新拉取列表，确保权限和可见状态以服务端为准。
   async function handleDelete(commentId: number) {
     if (!requireLogin()) return;
     setSubmitting(true);

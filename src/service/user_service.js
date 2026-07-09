@@ -22,6 +22,11 @@ function toUserProfile(user) {
 }
 
 class UserService {
+  // by AI.Coding：开放用户资料转换能力，供公开主页复用且避免返回密码字段。
+  toUserProfile(user) {
+    return toUserProfile(user)
+  }
+
   // 按用户名查询用户，用于注册去重和登录认证。
   async findByName(name) {
     const statement = 'SELECT * FROM `user` WHERE `name` = ?;'

@@ -1,3 +1,4 @@
+// 我的内容页，负责作者动态状态筛选、编辑、删除和重新提交审核。
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FilePenLine, PenSquare, Trash2 } from 'lucide-react';
@@ -21,6 +22,7 @@ const filterStatuses: Array<{ label: string; value: ContentStatus | '' }> = [
   { label: '已驳回', value: 'rejected' }
 ];
 
+// 编辑草稿保存当前正在编辑的内容、表单值和提交状态。
 interface EditDraft {
   content: ContentItem;
   body: string;
@@ -30,10 +32,12 @@ interface EditDraft {
   saving: boolean;
 }
 
+// URL 中的状态参数只允许映射到作者可见的内容状态。
 function isContentStatus(value: string | null): value is ContentStatus {
   return value === 'pending' || value === 'published' || value === 'rejected';
 }
 
+// 我的内容页集中处理作者内容列表、筛选、编辑和删除。
 export function MyContentsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Math.max(Number(searchParams.get('page')) || 1, 1);
@@ -45,6 +49,7 @@ export function MyContentsPage() {
   const [notice, setNotice] = useState(searchParams.get('created') ? '发布成功，内容正在等待审核。' : '');
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
 
+  // 按当前 URL 条件加载我的内容列表，失败时展示统一错误态。
   async function loadContents() {
     setLoading(true);
     setError('');
@@ -66,6 +71,7 @@ export function MyContentsPage() {
     loadContents();
   }, [page, status]);
 
+  // 切换状态筛选时同步 URL，并重置到第一页。
   function updateFilter(nextStatus: ContentStatus | '') {
     const next = new URLSearchParams();
     if (nextStatus) next.set('status', nextStatus);
@@ -80,6 +86,7 @@ export function MyContentsPage() {
     setSearchParams(next);
   }
 
+  // 打开编辑面板时用当前内容初始化草稿。
   function startEdit(content: ContentItem) {
     setEditDraft({ content, body: content.body || '', tagIds: [], files: [], error: '', saving: false });
   }
@@ -88,6 +95,7 @@ export function MyContentsPage() {
     setEditDraft((current) => current ? { ...current, ...next } : current);
   }
 
+  // 编辑标签采用前端去重切换，提交时整体交给后端重建关联。
   function toggleEditTag(tagId: number) {
     setEditDraft((current) => {
       if (!current) return current;
@@ -96,6 +104,7 @@ export function MyContentsPage() {
     });
   }
 
+  // 保存编辑时重新提交审核，正文和图片仍需至少保留一项。
   async function saveEdit() {
     if (!editDraft) return;
     const nextBody = editDraft.body.trim();
@@ -119,6 +128,7 @@ export function MyContentsPage() {
     }
   }
 
+  // 删除作者内容后刷新当前列表并给出操作反馈。
   async function handleDelete(contentId: number) {
     setError('');
     try {

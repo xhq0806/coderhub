@@ -9,15 +9,15 @@ class ContentController {
     success(ctx, result, '发布内容成功，等待审核')
   }
 
-  // 查询公开内容分页列表，只返回已公开内容。
+  // by AI.Coding：查询公开内容分页列表，访客可看聚合计数，登录用户额外返回 viewer 状态。
   async listPublished(ctx) {
-    const result = await contentService.listPublished(ctx.query || {})
+    const result = await contentService.listPublished(ctx.query || {}, ctx.state.user?.id)
     pageSuccess(ctx, result)
   }
 
-  // 查询公开内容详情，非公开内容按不存在处理。
+  // by AI.Coding：查询公开内容详情，非公开内容按不存在处理，并补充互动状态。
   async detail(ctx) {
-    const result = await contentService.getPublishedDetail(Number(ctx.params.id))
+    const result = await contentService.getPublishedDetail(Number(ctx.params.id), ctx.state.user?.id)
     success(ctx, result, '查询成功')
   }
 

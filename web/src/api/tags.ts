@@ -1,3 +1,4 @@
+// 标签 API 封装，负责读取前台可用标签。
 import { request } from '../lib/request';
 import type { PageResult, TagItem } from './types';
 

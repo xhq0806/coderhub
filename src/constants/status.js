@@ -37,6 +37,27 @@ const FILE_USAGE = {
   CONTENT_IMAGE: 'content_image'
 }
 
+const NOTIFICATION_STATUS = {
+  UNREAD: 'unread',
+  READ: 'read'
+}
+
+const NOTIFICATION_TYPE = {
+  CONTENT_APPROVED: 'content_approved',
+  CONTENT_REJECTED: 'content_rejected',
+  COMMENT: 'comment',
+  REPLY: 'reply',
+  LIKE: 'like',
+  FAVORITE: 'favorite',
+  FOLLOW: 'follow'
+}
+
+const NOTIFICATION_TARGET = {
+  CONTENT: 'content',
+  COMMENT: 'comment',
+  USER: 'user'
+}
+
 // 导出所有状态常量，供 service 校验状态流转和查询条件。
 module.exports = {
   USER_STATUS,
@@ -45,5 +66,8 @@ module.exports = {
   COMMENT_STATUS,
   TAG_STATUS,
   FILE_STATUS,
-  FILE_USAGE
+  FILE_USAGE,
+  NOTIFICATION_STATUS,
+  NOTIFICATION_TYPE,
+  NOTIFICATION_TARGET
 }

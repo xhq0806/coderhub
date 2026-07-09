@@ -1,3 +1,4 @@
+// 前端接口类型定义，集中描述后端统一响应中的业务实体。
 export type ApiCode = 0 | -1001 | -1002 | -1003 | -1004 | -1005 | -1006 | -1007 | -1008 | -1009 | -1010 | -1500;
 
 export interface PageResult<T> {
@@ -78,6 +79,11 @@ export interface ContentItem {
   reviewedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  likeCount: number;
+  favoriteCount: number;
+  commentCount: number;
+  viewerLiked: boolean;
+  viewerFavorited: boolean;
 }
 
 export interface ContentDetail extends ContentItem {
@@ -96,6 +102,42 @@ export interface ListContentParams {
   pageSize?: number;
   tagId?: number;
   status?: ContentStatus;
+  keyword?: string;
+  sort?: 'latest' | 'hot';
+}
+
+export interface ContentInteractionState {
+  contentId: number;
+  likeCount: number;
+  favoriteCount: number;
+  commentCount: number;
+  viewerLiked: boolean;
+  viewerFavorited: boolean;
+}
+
+export interface UserPublicProfile {
+  user: UserProfile;
+  followerCount: number;
+  followingCount: number;
+  viewerFollowing: boolean;
+}
+
+export type NotificationStatus = 'unread' | 'read';
+export type NotificationType = 'content_approved' | 'content_rejected' | 'comment' | 'reply' | 'like' | 'favorite' | 'follow';
+export type NotificationTargetType = 'content' | 'comment' | 'user';
+
+export interface NotificationItem {
+  id: number;
+  userId: number;
+  actorUserId: number | null;
+  type: NotificationType | string;
+  title: string;
+  body: string | null;
+  targetType: NotificationTargetType | string;
+  targetId: number;
+  status: NotificationStatus | string;
+  createdAt: string;
+  readAt: string | null;
 }
 
 export interface CommentItem {

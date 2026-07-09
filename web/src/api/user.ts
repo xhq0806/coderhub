@@ -1,3 +1,4 @@
+// 用户 API 封装，负责注册、登录、当前用户资料和资料更新请求。
 import { request } from '../lib/request';
 import type { AuthSession, LoginPayload, RegisterPayload, UpdateProfilePayload, UserProfile } from './types';
 

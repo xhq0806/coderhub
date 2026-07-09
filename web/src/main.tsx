@@ -1,3 +1,4 @@
+// 前端应用入口，负责挂载 React 根组件和全局样式。
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';

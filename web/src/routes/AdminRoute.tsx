@@ -1,8 +1,10 @@
+// 管理端路由守卫，限制后台页面只能由管理员访问。
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { ShieldAlert } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 import { StatusView } from '../components/StatusView';
 
+// 管理端守卫在认证加载完成后校验管理员角色。
 export function AdminRoute() {
   const location = useLocation();
   const { loading, user } = useAuth();

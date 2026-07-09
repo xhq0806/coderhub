@@ -1,3 +1,4 @@
+// 个人资料页，负责昵称、简介和头像维护。
 import { useEffect, useState, type FormEvent } from 'react';
 import { Save, UserRound } from 'lucide-react';
 import { updateCurrentUser } from '../api/user';
@@ -7,6 +8,7 @@ import { FileUploader } from '../components/FileUploader';
 import { getErrorMessage } from '../lib/errors';
 import { resolveAssetUrl } from '../lib/request';
 
+// 资料页用本地表单状态承接当前用户资料，并在保存后同步认证上下文。
 export function ProfilePage() {
   const { session, user, updateUser } = useAuth();
   const [nickname, setNickname] = useState(user?.nickname || user?.name || '');
@@ -25,6 +27,7 @@ export function ProfilePage() {
     setAvatarPreview(session?.avatarUrl || '');
   }, [user, session?.avatarUrl]);
 
+  // 保存资料时只提交用户可编辑字段，成功后刷新全局用户信息。
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);

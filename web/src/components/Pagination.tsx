@@ -1,5 +1,7 @@
+// 分页组件，统一处理上一页、下一页和页码展示。
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+// 分页组件入参只关心当前页、每页数量、总数和页码变化回调。
 interface PaginationProps {
   page: number;
   pageSize: number;
@@ -7,6 +9,7 @@ interface PaginationProps {
   onChange: (page: number) => void;
 }
 
+// 分页组件在无上一页或下一页时禁用对应按钮，避免无效请求。
 export function Pagination({ page, pageSize, total, onChange }: PaginationProps) {
   const totalPages = Math.max(Math.ceil(total / pageSize), 1);
   if (totalPages <= 1) return null;

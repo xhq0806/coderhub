@@ -1,3 +1,4 @@
+// components/AdminTable.tsx 模块，承载前端对应功能的页面、组件或请求封装。
 import type { ReactNode } from 'react';
 import { RefreshCcw, ShieldAlert } from 'lucide-react';
 import { Pagination } from './Pagination';
@@ -19,7 +20,7 @@ interface AdminTableProps {
   children: ReactNode;
 }
 
-// by AI.Coding：管理端表格统一承载列表状态，并为后台接口无权限错误提供专门展示。
+// 管理端表格统一承载列表状态，并为后台接口无权限错误提供专门展示。
 export function AdminTable({ title, description, loading, error, empty, page, pageSize, total, onPageChange, onRetry, forbidden = false, toolbar, children }: AdminTableProps) {
   return (
     <section className="admin-panel">
