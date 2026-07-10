@@ -14,6 +14,10 @@ export function listMyContents(params: ListContentParams = {}) {
   return request<PageResult<ContentItem>>('/users/me/contents', { params });
 }
 
+export function getMyContent(id: number) {
+  return request<ContentDetail>('/users/me/contents/' + id);
+}
+
 export function listUserContents(userId: number, params: ListContentParams = {}) {
   return request<PageResult<ContentItem>>('/users/' + userId + '/contents', { params });
 }

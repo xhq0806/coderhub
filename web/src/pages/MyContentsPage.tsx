@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FilePenLine, PenSquare, Trash2 } from 'lucide-react';
-import { deleteMyContent, listMyContents, updateMyContent } from '../api/contents';
+import { deleteMyContent, getMyContent, listMyContents, updateMyContent } from '../api/contents';
 import { uploadContentImage } from '../api/files';
 import { listTags } from '../api/tags';
 import type { ContentItem, ContentStatus, FileItem, PageResult, TagItem } from '../api/types';
@@ -10,8 +10,11 @@ import { ContentCard } from '../components/ContentCard';
 import { FileUploader } from '../components/FileUploader';
 import { Pagination } from '../components/Pagination';
 import { StatusView } from '../components/StatusView';
+import { useToast } from '../components/ToastProvider';
 import { getErrorMessage } from '../lib/errors';
+import { confirmDanger } from '../lib/feedback';
 import { resolveAssetUrl } from '../lib/request';
+import { validateContentDraft } from '../lib/validation';
 
 const pageSize = 10;
 const editableStatuses = new Set<ContentStatus>(['pending', 'rejected']);
@@ -22,12 +25,14 @@ const filterStatuses: Array<{ label: string; value: ContentStatus | '' }> = [
   { label: '已驳回', value: 'rejected' }
 ];
 
+type EditFile = Pick<FileItem, 'id' | 'url'> & Partial<Pick<FileItem, 'originalName' | 'filename' | 'usageType' | 'status'>>;
+
 // 编辑草稿保存当前正在编辑的内容、表单值和提交状态。
 interface EditDraft {
   content: ContentItem;
   body: string;
   tagIds: number[];
-  files: FileItem[];
+  files: EditFile[];
   error: string;
   saving: boolean;
 }
@@ -48,6 +53,8 @@ export function MyContentsPage() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState(searchParams.get('created') ? '发布成功，内容正在等待审核。' : '');
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const toast = useToast();
 
   // 按当前 URL 条件加载我的内容列表，失败时展示统一错误态。
   async function loadContents() {
@@ -86,9 +93,27 @@ export function MyContentsPage() {
     setSearchParams(next);
   }
 
-  // 打开编辑面板时用当前内容初始化草稿。
-  function startEdit(content: ContentItem) {
-    setEditDraft({ content, body: content.body || '', tagIds: [], files: [], error: '', saving: false });
+  // 打开编辑面板时拉取作者视角详情，回显当前标签和图片。
+  async function startEdit(content: ContentItem) {
+    setEditingId(content.id);
+    setError('');
+    try {
+      const detail = await getMyContent(content.id);
+      setEditDraft({
+        content,
+        body: detail.body || '',
+        tagIds: detail.tags.map((tag) => tag.id),
+        files: detail.files,
+        error: '',
+        saving: false
+      });
+    } catch (err) {
+      const message = getErrorMessage(err, '内容详情加载失败');
+      setError(message);
+      toast.error(message);
+    } finally {
+      setEditingId(null);
+    }
   }
 
   function updateEditDraft(next: Partial<EditDraft>) {
@@ -104,12 +129,18 @@ export function MyContentsPage() {
     });
   }
 
+  function removeEditFile(fileId: number) {
+    if (!confirmDanger('确定要从本次编辑中移除这张图片吗？')) return;
+    updateEditDraft({ files: editDraft ? editDraft.files.filter((item) => item.id !== fileId) : [] });
+  }
+
   // 保存编辑时重新提交审核，正文和图片仍需至少保留一项。
   async function saveEdit() {
     if (!editDraft) return;
     const nextBody = editDraft.body.trim();
-    if (!nextBody && editDraft.files.length === 0) {
-      updateEditDraft({ error: '正文和图片至少填写一项' });
+    const validationError = validateContentDraft(nextBody, editDraft.files.length, editDraft.tagIds.length);
+    if (validationError) {
+      updateEditDraft({ error: validationError });
       return;
     }
 
@@ -123,20 +154,27 @@ export function MyContentsPage() {
       setEditDraft(null);
       await loadContents();
       setNotice('内容已重新提交审核。');
+      toast.success('内容已重新提交审核。');
     } catch (err) {
-      updateEditDraft({ error: getErrorMessage(err, '更新内容失败'), saving: false });
+      const message = getErrorMessage(err, '更新内容失败');
+      updateEditDraft({ error: message, saving: false });
+      toast.error(message);
     }
   }
 
   // 删除作者内容后刷新当前列表并给出操作反馈。
   async function handleDelete(contentId: number) {
+    if (!confirmDanger('确定要删除这条内容吗？删除后将不再展示。')) return;
     setError('');
     try {
       await deleteMyContent(contentId);
       await loadContents();
       setNotice('内容已删除。');
+      toast.success('内容已删除。');
     } catch (err) {
-      setError(getErrorMessage(err, '删除内容失败'));
+      const message = getErrorMessage(err, '删除内容失败');
+      setError(message);
+      toast.error(message);
     }
   }
 
@@ -169,7 +207,7 @@ export function MyContentsPage() {
                 actions={(
                   <>
                     {content.status === 'published' ? <Link className="button ghost" to={'/contents/' + content.id}>查看</Link> : null}
-                    {editableStatuses.has(content.status) ? <button className="button ghost" type="button" onClick={() => startEdit(content)}><PenSquare size={16} />编辑</button> : null}
+                    {editableStatuses.has(content.status) ? <button className="button ghost" type="button" disabled={editingId === content.id} onClick={() => startEdit(content)}><PenSquare size={16} />{editingId === content.id ? '加载中...' : '编辑'}</button> : null}
                     <button className="button danger icon-button" type="button" onClick={() => handleDelete(content.id)} aria-label="删除内容" title="删除内容"><Trash2 size={16} /></button>
                   </>
                 )}
@@ -178,7 +216,7 @@ export function MyContentsPage() {
                 <div className="edit-panel form-panel">
                   <label className="form-field">
                     <span>正文</span>
-                    <textarea className="textarea" value={editDraft.body} onChange={(event) => updateEditDraft({ body: event.target.value })} />
+                    <textarea className="textarea" value={editDraft.body} maxLength={1000} onChange={(event) => updateEditDraft({ body: event.target.value })} />
                   </label>
                   <div>
                     <strong>标签</strong>
@@ -193,8 +231,8 @@ export function MyContentsPage() {
                     <div className="uploaded-list">
                       {editDraft.files.map((file) => (
                         <div className="uploaded-item" key={file.id}>
-                          <img className="upload-preview" src={resolveAssetUrl(file.url)} alt={file.originalName || '内容图片'} />
-                          <button className="button danger" type="button" onClick={() => updateEditDraft({ files: editDraft.files.filter((item) => item.id !== file.id) })}>移除</button>
+                          <img className="upload-preview" src={resolveAssetUrl(file.url)} alt={file.originalName || '内容图片'} loading="lazy" decoding="async" />
+                          <button className="button danger" type="button" onClick={() => removeEditFile(file.id)}>移除</button>
                         </div>
                       ))}
                     </div>

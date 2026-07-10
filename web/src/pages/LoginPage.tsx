@@ -5,6 +5,7 @@ import { LogIn, UserPlus } from 'lucide-react';
 import { consumeAuthNotice } from '../auth/session';
 import { useAuth } from '../auth/useAuth';
 import { getErrorMessage, isDisabledAccountError } from '../lib/errors';
+import { validateAuthForm } from '../lib/validation';
 
 interface LocationState {
   from?: string;
@@ -24,6 +25,11 @@ export function LoginPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const validationError = validateAuthForm(name, password);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setSubmitting(true);
     setError('');
     try {

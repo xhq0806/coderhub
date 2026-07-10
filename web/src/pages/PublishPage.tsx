@@ -7,8 +7,11 @@ import { uploadContentImage } from '../api/files';
 import { listTags } from '../api/tags';
 import type { FileItem, TagItem } from '../api/types';
 import { FileUploader } from '../components/FileUploader';
+import { useToast } from '../components/ToastProvider';
 import { getErrorMessage } from '../lib/errors';
+import { confirmDanger } from '../lib/feedback';
 import { resolveAssetUrl } from '../lib/request';
+import { validateContentDraft } from '../lib/validation';
 
 // 发布页管理动态草稿、标签选择、图片列表和提交状态。
 export function PublishPage() {
@@ -19,6 +22,7 @@ export function PublishPage() {
   const [images, setImages] = useState<FileItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const toast = useToast();
 
   useEffect(() => {
     listTags({ page: 1, pageSize: 100 }).then((result) => setTags(result.list)).catch(() => setTags([]));
@@ -33,8 +37,9 @@ export function PublishPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextBody = body.trim();
-    if (!nextBody && images.length === 0) {
-      setError('正文和图片至少填写一项');
+    const validationError = validateContentDraft(nextBody, images.length, selectedTagIds.length);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -47,8 +52,10 @@ export function PublishPage() {
         fileIds: images.map((image) => image.id)
       });
       navigate('/my/contents?status=pending&created=1');
+      toast.success('发布成功，内容正在等待审核。');
     } catch (err) {
       setError(getErrorMessage(err, '发布失败'));
+      toast.error(getErrorMessage(err, '发布失败'));
     } finally {
       setSubmitting(false);
     }
@@ -75,7 +82,7 @@ export function PublishPage() {
       </div>
         <label className="form-field">
           <span>正文</span>
-          <textarea className="textarea" value={body} placeholder="分享今天的进展" onChange={(event) => setBody(event.target.value)} />
+          <textarea className="textarea" value={body} maxLength={1000} placeholder="分享今天的进展" onChange={(event) => setBody(event.target.value)} />
         </label>
         <div>
           <strong className="field-title"><Tags size={17} />标签</strong>
@@ -91,8 +98,8 @@ export function PublishPage() {
           <div className="uploaded-list">
             {images.map((image) => (
               <div className="uploaded-item" key={image.id}>
-                <img className="upload-preview" src={resolveAssetUrl(image.url)} alt={image.originalName || '内容图片'} />
-                <button className="button danger" type="button" onClick={() => setImages((current) => current.filter((item) => item.id !== image.id))}>移除</button>
+                <img className="upload-preview" src={resolveAssetUrl(image.url)} alt={image.originalName || '内容图片'} loading="lazy" decoding="async" />
+                <button className="button danger" type="button" onClick={() => confirmDanger('确定要从本次发布中移除这张图片吗？') && setImages((current) => current.filter((item) => item.id !== image.id))}>移除</button>
               </div>
             ))}
           </div>

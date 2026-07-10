@@ -19,6 +19,7 @@ userRouter.patch('/users/me', verifyAuth, userController.updateMe)
 
 // 当前用户内容和收藏列表接口。
 userRouter.get('/users/me/contents', verifyAuth, contentController.listMine)
+userRouter.get('/users/me/contents/:id', verifyAuth, contentController.detailMine)
 userRouter.get('/users/me/favorites', verifyAuth, interactionController.listFavorites)
 
 module.exports = userRouter

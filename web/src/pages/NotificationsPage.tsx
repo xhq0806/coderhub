@@ -6,7 +6,10 @@ import { listNotifications, markAllNotificationsRead, markNotificationRead } fro
 import type { NotificationItem, PageResult } from '../api/types';
 import { Pagination } from '../components/Pagination';
 import { StatusView } from '../components/StatusView';
+import { useToast } from '../components/ToastProvider';
+import { useUnreadNotifications } from '../notifications/UnreadNotificationContext';
 import { getErrorMessage } from '../lib/errors';
+import { confirmDanger } from '../lib/feedback';
 import { formatDate } from '../lib/format';
 
 const pageSize = 10;
@@ -17,6 +20,8 @@ export function NotificationsPage() {
   const [result, setResult] = useState<PageResult<NotificationItem> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { refreshUnreadCount } = useUnreadNotifications();
+  const toast = useToast();
 
   // 分页加载通知，按服务端创建时间倒序展示。
   async function loadNotifications() {
@@ -44,23 +49,32 @@ export function NotificationsPage() {
     return '/notifications';
   }
 
-  // 标记单条通知已读后刷新列表，保持未读状态准确。
+  // 标记单条通知已读后刷新列表和顶部未读角标。
   async function markRead(id: number) {
     try {
       await markNotificationRead(id);
       await loadNotifications();
+      await refreshUnreadCount();
+      toast.success('通知已标为已读。');
     } catch (err) {
-      setError(getErrorMessage(err, '标记已读失败'));
+      const message = getErrorMessage(err, '标记已读失败');
+      setError(message);
+      toast.error(message);
     }
   }
 
-  // 全部已读后刷新当前页，顶部角标由 Layout 下一次加载同步。
+  // 全部已读前进行确认，成功后同步顶部角标。
   async function markAllRead() {
+    if (!confirmDanger('确定要将全部通知标为已读吗？')) return;
     try {
       await markAllNotificationsRead();
       await loadNotifications();
+      await refreshUnreadCount();
+      toast.success('全部通知已标为已读。');
     } catch (err) {
-      setError(getErrorMessage(err, '全部已读失败'));
+      const message = getErrorMessage(err, '全部已读失败');
+      setError(message);
+      toast.error(message);
     }
   }
 

@@ -327,6 +327,11 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 .notification-card.read .notification-dot { background: var(--line-strong); box-shadow: none; }
 .notification-card p { margin: 6px 0; color: var(--ink-soft); }
 .notification-card small { color: var(--muted); font-weight: 800; }
+.toast-stack { position: fixed; right: 22px; bottom: 22px; z-index: 80; display: grid; gap: 10px; width: min(360px, calc(100vw - 44px)); }
+.toast-card { padding: 13px 15px; border: 1px solid var(--line); border-radius: var(--radius); background: rgba(255,252,244,.96); color: var(--ink); box-shadow: var(--shadow-soft); font-weight: 850; }
+.toast-card.success { border-color: #9bcba7; background: #e8f5e6; color: var(--green); }
+.toast-card.error { border-color: #deaaa0; background: #ffe4dd; color: var(--danger); }
+.toast-card.info { border-color: #d59b34; background: #fff1c8; color: #815300; }
 
 @media (max-width: 920px) {
   .topbar { grid-template-columns: 1fr; gap: 12px; padding: 16px; position: static; }

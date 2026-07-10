@@ -27,6 +27,12 @@ class ContentController {
     pageSuccess(ctx, result)
   }
 
+  // 查询当前用户自己的内容详情，包含编辑回显所需标签和图片。
+  async detailMine(ctx) {
+    const result = await contentService.getMineDetail(ctx.state.user.id, Number(ctx.params.id))
+    success(ctx, result, '查询成功')
+  }
+
   // 作者编辑自己的待审核或已驳回内容。
   async updateMine(ctx) {
     const result = await contentService.updateMine(ctx.state.user.id, Number(ctx.params.id), ctx.request.body || {})

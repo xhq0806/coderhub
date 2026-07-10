@@ -2,21 +2,11 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { Compass, FilePenLine, LibraryBig, LogIn, LogOut, PenSquare, Star, Bell, UserRound } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
-import { useEffect, useState } from 'react';
-import { getUnreadNotificationCount } from '../api/notifications';
+import { useUnreadNotifications } from '../notifications/UnreadNotificationContext';
 
 export function Layout() {
   const { user, logout } = useAuth();
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  // 登录用户进入应用时读取未读通知数量，用于顶部角标提示。
-  useEffect(() => {
-    if (!user) {
-      setUnreadCount(0);
-      return;
-    }
-    getUnreadNotificationCount().then((result) => setUnreadCount(result.unreadCount)).catch(() => setUnreadCount(0));
-  }, [user]);
+  const { unreadCount } = useUnreadNotifications();
 
   return (
     <div className="app-shell">

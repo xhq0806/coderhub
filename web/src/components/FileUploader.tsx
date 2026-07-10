@@ -47,7 +47,7 @@ export function FileUploader({ label, buttonText, upload, onUploaded }: FileUplo
         {lastFile ? <span className="muted">已上传：#{lastFile.id}</span> : null}
       </div>
       <input ref={inputRef} className="visually-hidden" type="file" accept="image/*" onChange={handleChange} />
-      {lastFile ? <img className="upload-preview" src={resolveAssetUrl(lastFile.url)} alt={lastFile.originalName || '上传图片'} /> : null}
+      {lastFile ? <img className="upload-preview" src={resolveAssetUrl(lastFile.url)} alt={lastFile.originalName || '上传图片'} loading="lazy" decoding="async" /> : null}
       {error ? <p className="form-error">{error}</p> : null}
     </div>
   );

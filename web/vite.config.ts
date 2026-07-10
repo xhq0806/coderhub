@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => {
         '/comments': apiTarget,
         '/tags': apiTarget,
         '/files': apiTarget,
+        '/notifications': apiTarget,
         '/admin': apiTarget,
         '/uploads': apiTarget
       }

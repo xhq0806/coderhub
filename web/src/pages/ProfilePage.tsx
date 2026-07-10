@@ -7,6 +7,7 @@ import { useAuth } from '../auth/useAuth';
 import { FileUploader } from '../components/FileUploader';
 import { getErrorMessage } from '../lib/errors';
 import { resolveAssetUrl } from '../lib/request';
+import { validateProfileForm } from '../lib/validation';
 
 // 资料页用本地表单状态承接当前用户资料，并在保存后同步认证上下文。
 export function ProfilePage() {
@@ -30,6 +31,11 @@ export function ProfilePage() {
   // 保存资料时只提交用户可编辑字段，成功后刷新全局用户信息。
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const validationError = validateProfileForm(nickname, intro);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setSaving(true);
     setError('');
     setNotice('');
@@ -66,7 +72,7 @@ export function ProfilePage() {
       </div>
         <div className="form-field">
           <span>头像</span>
-          {avatarPreview ? <img className="avatar-preview" src={resolveAssetUrl(avatarPreview)} alt="当前头像" /> : <span className="muted">当前头像文件：{avatarFileId ? '#' + avatarFileId : '未设置'}</span>}
+          {avatarPreview ? <img className="avatar-preview" src={resolveAssetUrl(avatarPreview)} alt="当前头像" loading="lazy" decoding="async" /> : <span className="muted">当前头像文件：{avatarFileId ? '#' + avatarFileId : '未设置'}</span>}
         </div>
         <FileUploader
           label="上传头像"
@@ -79,11 +85,11 @@ export function ProfilePage() {
         />
         <label className="form-field">
           <span>昵称</span>
-          <input className="input" value={nickname} onChange={(event) => setNickname(event.target.value)} />
+          <input className="input" value={nickname} maxLength={30} onChange={(event) => setNickname(event.target.value)} />
         </label>
         <label className="form-field">
           <span>简介</span>
-          <textarea className="textarea" value={intro} onChange={(event) => setIntro(event.target.value)} />
+          <textarea className="textarea" value={intro} maxLength={200} onChange={(event) => setIntro(event.target.value)} />
         </label>
         {notice ? <p className="success-text">{notice}</p> : null}
         {error ? <p className="form-error">{error}</p> : null}

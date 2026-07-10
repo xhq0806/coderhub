@@ -93,7 +93,7 @@ export function AdminFilesPage() {
           {result?.list.map((file) => (
             <tr key={file.id}>
               <td>#{file.id}</td>
-              <td><img className="admin-file-thumb" src={resolveAssetUrl(file.url)} alt={file.originalName || file.filename} /></td>
+              <td><img className="admin-file-thumb" src={resolveAssetUrl(file.url)} alt={file.originalName || file.filename} loading="lazy" decoding="async" /></td>
               <td>用户 #{file.userId}</td>
               <td>{file.usageType}</td>
               <td className="admin-copy">{file.originalName || file.filename}</td>

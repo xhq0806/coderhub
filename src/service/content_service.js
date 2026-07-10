@@ -131,6 +131,15 @@ class ContentService {
     return { list: list.map(toContentItem), total: countRows[0].total, page, pageSize }
   }
 
+  // 作者查询自己的内容详情，用于待审核和驳回内容编辑回显标签与图片。
+  async getMineDetail(userId, contentId) {
+    const content = await this.findById(contentId)
+    if (!content || content.status === CONTENT_STATUS.DELETED) throw createError('NOT_FOUND', '内容不存在')
+    if (content.user_id !== userId) throw createError('FORBIDDEN')
+    if (![CONTENT_STATUS.PENDING, CONTENT_STATUS.REJECTED, CONTENT_STATUS.PUBLISHED].includes(content.status)) throw createError('NOT_FOUND', '内容不存在')
+    return this.buildDetail(content, userId)
+  }
+
   // by AI.Coding：查询公开内容详情，非公开内容对公众表现为不存在。
   async getPublishedDetail(contentId, viewerId) {
     const content = await this.findById(contentId)

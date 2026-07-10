@@ -88,7 +88,7 @@ export interface ContentItem {
 
 export interface ContentDetail extends ContentItem {
   tags: TagItem[];
-  files: Pick<FileItem, 'id' | 'url' | 'usageType' | 'status'>[];
+  files: Array<Pick<FileItem, 'id' | 'url' | 'usageType' | 'status'> & Partial<Pick<FileItem, 'originalName' | 'filename'>>>;
 }
 
 export interface ContentPayload {

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { LogIn, UserPlus } from 'lucide-react';
 import { registerUser } from '../api/user';
 import { getErrorMessage } from '../lib/errors';
+import { validateAuthForm } from '../lib/validation';
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -14,6 +15,11 @@ export function RegisterPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const validationError = validateAuthForm(name, password);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setSubmitting(true);
     setError('');
     try {
