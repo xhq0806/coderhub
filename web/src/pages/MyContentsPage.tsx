@@ -129,8 +129,8 @@ export function MyContentsPage() {
     });
   }
 
-  function removeEditFile(fileId: number) {
-    if (!confirmDanger('确定要从本次编辑中移除这张图片吗？')) return;
+  async function removeEditFile(fileId: number) {
+    if (!(await confirmDanger('确定要从本次编辑中移除这张图片吗？'))) return;
     updateEditDraft({ files: editDraft ? editDraft.files.filter((item) => item.id !== fileId) : [] });
   }
 
@@ -164,7 +164,7 @@ export function MyContentsPage() {
 
   // 删除作者内容后刷新当前列表并给出操作反馈。
   async function handleDelete(contentId: number) {
-    if (!confirmDanger('确定要删除这条内容吗？删除后将不再展示。')) return;
+    if (!(await confirmDanger('确定要删除这条内容吗？删除后将不再展示。'))) return;
     setError('');
     try {
       await deleteMyContent(contentId);

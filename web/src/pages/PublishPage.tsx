@@ -61,6 +61,12 @@ export function PublishPage() {
     }
   }
 
+  // by AI.Coding：移除已上传图片前使用全局 Dialog 确认，取消时保持草稿不变。
+  async function removeImage(imageId: number) {
+    if (!(await confirmDanger('确定要从本次发布中移除这张图片吗？'))) return;
+    setImages((current) => current.filter((item) => item.id !== imageId));
+  }
+
   return (
     <section className="workspace-grid">
       <aside className="side-note">
@@ -99,7 +105,7 @@ export function PublishPage() {
             {images.map((image) => (
               <div className="uploaded-item" key={image.id}>
                 <img className="upload-preview" src={resolveAssetUrl(image.url)} alt={image.originalName || '内容图片'} loading="lazy" decoding="async" />
-                <button className="button danger" type="button" onClick={() => confirmDanger('确定要从本次发布中移除这张图片吗？') && setImages((current) => current.filter((item) => item.id !== image.id))}>移除</button>
+                <button className="button danger" type="button" onClick={() => removeImage(image.id)}>移除</button>
               </div>
             ))}
           </div>

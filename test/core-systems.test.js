@@ -161,6 +161,18 @@ async function testCoreFlow() {
   const reply = assertSuccess(replyRes)
   assert.strictEqual(reply.parentId, comment.id)
 
+  // by AI.Coding：顶级列表不混入回复，并附带当前楼层回复数量。
+  const rootCommentsRes = await request(server).get(`/contents/${content.id}/comments`).expect(200)
+  const rootComments = assertSuccess(rootCommentsRes)
+  assert.strictEqual(rootComments.total, 1)
+  assert.strictEqual(rootComments.list[0].replyCount, 1)
+
+  // by AI.Coding：回复通过独立接口分页读取，顺序和父级均保持稳定。
+  const repliesRes = await request(server).get(`/comments/${comment.id}/replies`).expect(200)
+  const replies = assertSuccess(repliesRes)
+  assert.strictEqual(replies.total, 1)
+  assert.strictEqual(replies.list[0].parentId, comment.id)
+
   return { server, adminData, loginData, tag, content, comment, contentImage }
 }
 
@@ -353,7 +365,8 @@ async function testGovernancePaths(server, adminToken, userToken, tag, content, 
     .set('Authorization', `Bearer ${userToken}`)
     .expect(200)
   const commentsAfterDelete = await request(server).get(`/contents/${content.id}/comments`).expect(200)
-  assert.strictEqual(assertSuccess(commentsAfterDelete).total, 2)
+  // by AI.Coding：删除根评论会软删除整楼，剩余 total 只统计其它顶级评论。
+  assert.strictEqual(assertSuccess(commentsAfterDelete).total, 1)
 
   await request(server)
     .patch(`/admin/contents/${content.id}/offline`)

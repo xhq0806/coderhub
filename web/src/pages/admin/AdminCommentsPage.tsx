@@ -5,6 +5,7 @@ import { deleteAdminComment, listAdminComments } from '../../api/admin';
 import type { CommentItem, PageResult } from '../../api/types';
 import { AdminActions, AdminStatusBadge, AdminTable } from '../../components/AdminTable';
 import { getErrorMessage, isForbiddenError } from '../../lib/errors';
+import { confirmDanger } from '../../lib/feedback';
 import { formatDate } from '../../lib/format';
 
 const pageSize = 10;
@@ -45,7 +46,7 @@ export function AdminCommentsPage() {
   }
 
   async function removeComment(comment: CommentItem) {
-    if (!window.confirm('确认删除该评论？')) return;
+    if (!(await confirmDanger('确认删除该评论？'))) return;
     setNotice('');
     try {
       await deleteAdminComment(comment.id);

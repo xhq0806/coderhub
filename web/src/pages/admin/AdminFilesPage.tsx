@@ -5,6 +5,7 @@ import { deleteAdminFile, listAdminFiles } from '../../api/admin';
 import type { FileItem, FileUsageType, PageResult } from '../../api/types';
 import { AdminActions, AdminStatusBadge, AdminTable } from '../../components/AdminTable';
 import { getErrorMessage, isForbiddenError } from '../../lib/errors';
+import { confirmDanger } from '../../lib/feedback';
 import { formatDate } from '../../lib/format';
 import { resolveAssetUrl } from '../../lib/request';
 
@@ -39,7 +40,7 @@ export function AdminFilesPage() {
   }, [page, usageType]);
 
   async function removeFile(file: FileItem) {
-    if (!window.confirm('确认删除该文件？删除后旧 URL 不再可访问。')) return;
+    if (!(await confirmDanger('确认删除该文件？删除后旧 URL 不再可访问。'))) return;
     setNotice('');
     try {
       await deleteAdminFile(file.id);

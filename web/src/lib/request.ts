@@ -56,7 +56,7 @@ function appendParams(url: string, params?: object) {
   return query ? url + (url.includes('?') ? '&' : '?') + query : url;
 }
 
-function resolveUrl(path: string, params?: object) {
+export function resolveApiUrl(path: string, params?: object) {
   if (/^https?:\/\//.test(path)) return appendParams(path, params);
   return appendParams(API_BASE_URL + normalizePath(path), params);
 }
@@ -78,7 +78,7 @@ function parseEnvelope<T>(value: unknown): ApiEnvelope<T> | null {
 }
 
 // 认证失效时先保存明确提示再清理 token，让登录页能解释跳转原因。
-function notifyAuthCleared(message: string, code: number) {
+export function notifyAuthCleared(message: string, code: number) {
   const notice = code === -1005 ? '账号已被禁用，请联系管理员处理。' : message;
   saveAuthNotice(notice);
   clearStoredSession();
@@ -99,7 +99,7 @@ export async function request<T>(path: string, options: ApiRequestOptions = {}):
     body = JSON.stringify(options.body);
   }
 
-  const response = await fetch(resolveUrl(path, options.params), {
+  const response = await fetch(resolveApiUrl(path, options.params), {
     method: options.method || 'GET',
     headers,
     body,

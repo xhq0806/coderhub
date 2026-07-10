@@ -5,6 +5,7 @@ import { approveAdminContent, deleteAdminContent, listAdminContents, offlineAdmi
 import type { ContentItem, ContentStatus, PageResult } from '../../api/types';
 import { AdminActions, AdminStatusBadge, AdminTable } from '../../components/AdminTable';
 import { getErrorMessage, isForbiddenError } from '../../lib/errors';
+import { confirmDanger } from '../../lib/feedback';
 import { formatDate } from '../../lib/format';
 
 const pageSize = 10;
@@ -46,6 +47,12 @@ export function AdminContentsPage() {
     } catch (err) {
       setError(getErrorMessage(err, '内容治理操作失败'));
     }
+  }
+
+  // by AI.Coding：后台删除内容前通过全局 Dialog 二次确认。
+  async function deleteContent(content: ContentItem) {
+    if (!(await confirmDanger('确认删除该内容？'))) return;
+    await runAction(() => deleteAdminContent(content.id), `内容 #${content.id} 已删除`);
   }
 
   function rejectContent(content: ContentItem) {
@@ -111,7 +118,7 @@ export function AdminContentsPage() {
                   {content.status === 'pending' ? <button className="button admin-primary" type="button" onClick={() => runAction(() => approveAdminContent(content.id), `内容 #${content.id} 已审核通过`)}><CheckCircle2 size={16} />通过</button> : null}
                   {content.status === 'pending' ? <button className="button admin-warn" type="button" onClick={() => rejectContent(content)}><SendToBack size={16} />驳回</button> : null}
                   {content.status === 'published' ? <button className="button admin-warn" type="button" onClick={() => runAction(() => offlineAdminContent(content.id), `内容 #${content.id} 已下架`)}><FileX2 size={16} />下架</button> : null}
-                  {content.status !== 'deleted' ? <button className="button admin-danger" type="button" onClick={() => window.confirm('确认删除该内容？') && runAction(() => deleteAdminContent(content.id), `内容 #${content.id} 已删除`)}><Trash2 size={16} />删除</button> : null}
+                  {content.status !== 'deleted' ? <button className="button admin-danger" type="button" onClick={() => deleteContent(content)}><Trash2 size={16} />删除</button> : null}
                 </AdminActions>
               </td>
             </tr>

@@ -77,6 +77,7 @@ export function ProfilePage() {
         <FileUploader
           label="上传头像"
           buttonText="选择头像"
+          usage="avatar"
           upload={uploadAvatar}
           onUploaded={(file) => {
             setAvatarFileId(file.id);

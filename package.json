@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node ./test/core-systems.test.js",
+    "test:e2e:setup": "node ./test/e2e-setup.js",
     "start": "node ./src/main.js",
     "web:install": "cd web && npm install",
     "web:dev": "cd web && npm run dev",

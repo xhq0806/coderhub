@@ -149,6 +149,7 @@ export interface CommentItem {
   status: 'visible' | 'deleted' | string;
   createdAt: string;
   updatedAt: string;
+  replyCount?: number;
 }
 
 export interface CommentPayload {

@@ -2,6 +2,7 @@
 import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { getCurrentUser, loginUser } from '../api/user';
 import type { AuthSession, LoginPayload, UserProfile } from '../api/types';
+import { removePrivateQueries } from '../lib/queryClient';
 import { AUTH_SESSION_CLEARED_EVENT, clearStoredSession, readStoredSession, saveStoredSession } from './session';
 
 // 认证上下文暴露登录态、用户信息和会话操作方法。
@@ -30,10 +31,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    removePrivateQueries();
     persistSession(null);
   }, [persistSession]);
 
   const login = useCallback(async (payload: LoginPayload) => {
+    // by AI.Coding：登录新账号前清理上一账号私有缓存，防止通知和管理数据短暂串号。
+    removePrivateQueries();
     const nextSession = await loginUser(payload);
     persistSession(nextSession);
   }, [persistSession]);
@@ -68,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const handleCleared = () => {
+      removePrivateQueries();
       setSession(null);
     };
     window.addEventListener(AUTH_SESSION_CLEARED_EVENT, handleCleared);

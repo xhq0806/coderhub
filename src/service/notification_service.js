@@ -1,5 +1,6 @@
 // by AI.Coding：通知服务集中维护站内事件创建、分页读取和已读状态，避免事件散落到各业务模块。
 const connectionPool = require('../app/database')
+const notificationBroker = require('./notification_broker')
 const { NOTIFICATION_STATUS } = require('../constants/status')
 const { createError, parsePage } = require('../utils/response')
 
@@ -31,7 +32,14 @@ class NotificationService {
       'INSERT INTO `notification` (`user_id`, `actor_user_id`, `type`, `title`, `body`, `target_type`, `target_id`, `status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?);',
       [userId, actorUserId, type, title, body, targetType, targetId, NOTIFICATION_STATUS.UNREAD]
     )
-    return this.findMine(userId, result.insertId)
+    const notification = await this.findMine(userId, result.insertId)
+    // by AI.Coding：通知已持久化后再广播；实时通道失败不得反向破坏业务请求。
+    try {
+      notificationBroker.publish(userId, { type: 'notification.created', notificationId: notification.id })
+    } catch (error) {
+      console.error('通知实时广播失败:', error)
+    }
+    return notification
   }
 
   // by AI.Coding：按通知 ID 查询本人通知，供已读操作做权限校验。

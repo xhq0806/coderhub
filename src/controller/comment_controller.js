@@ -21,6 +21,12 @@ class CommentController {
     pageSuccess(ctx, result)
   }
 
+  // by AI.Coding：分页查询指定顶级评论下的可见回复。
+  async listReplies(ctx) {
+    const result = await commentService.listReplies(Number(ctx.params.id), ctx.query || {})
+    pageSuccess(ctx, result)
+  }
+
   // 评论作者或内容作者删除评论。
   async deleteByUser(ctx) {
     const result = await commentService.deleteByUser(ctx.state.user.id, Number(ctx.params.id))

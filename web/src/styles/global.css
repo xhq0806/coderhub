@@ -286,11 +286,16 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 .avatar-preview { width: 102px; height: 102px; border-radius: 50%; }
 
 .uploader { display: grid; gap: 10px; padding: 14px; border: 1px dashed var(--line-strong); border-radius: var(--radius); background: rgba(255, 252, 244, 0.46); }
+.uploader-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.upload-progress { width: min(100%, 420px); height: 12px; accent-color: var(--teal-dark); }
 .uploaded-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 .uploaded-item { position: relative; }
 .uploaded-item .button { position: absolute; right: 8px; top: 8px; min-height: 32px; padding: 0 10px; }
 
 .comment-list { display: grid; gap: 12px; margin-top: 18px; }
+.comment-thread { display: grid; gap: 8px; }
+.reply-list { display: grid; gap: 8px; }
+.thread-toggle { justify-self: start; margin-left: 28px; }
 .comment-item { padding: 16px; box-shadow: none; background: rgba(255, 252, 244, 0.62); }
 .comment-item.reply { margin-left: 28px; background: rgba(242, 234, 216, 0.72); }
 .comment-meta { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 14px; font-weight: 750; flex-wrap: wrap; }
@@ -332,6 +337,14 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 .toast-card.success { border-color: #9bcba7; background: #e8f5e6; color: var(--green); }
 .toast-card.error { border-color: #deaaa0; background: #ffe4dd; color: var(--danger); }
 .toast-card.info { border-color: #d59b34; background: #fff1c8; color: #815300; }
+
+/* by AI.Coding：全局危险确认 Dialog 使用高层遮罩并保持键盘焦点清晰可见。 */
+.dialog-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: rgba(21, 26, 24, 0.56); backdrop-filter: blur(3px); }
+.dialog-card { display: grid; grid-template-columns: auto 1fr; gap: 14px; width: min(460px, 100%); padding: 22px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: #fffaf0; box-shadow: 10px 12px 0 rgba(21, 26, 24, 0.2); }
+.dialog-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #ffe4dd; color: var(--danger); }
+.dialog-copy h2 { margin: 0 0 8px; font-family: Georgia, "Times New Roman", serif; }
+.dialog-copy p { margin: 0; color: var(--ink-soft); line-height: 1.65; }
+.dialog-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
 
 @media (max-width: 920px) {
   .topbar { grid-template-columns: 1fr; gap: 12px; padding: 16px; position: static; }
