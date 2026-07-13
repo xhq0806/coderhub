@@ -6,6 +6,8 @@ async function errorMiddleware(ctx, next) {
   try {
     await next()
   } catch (error) {
+    // by AI.Coding：浏览器取消静态/SSE 响应是正常连接生命周期，不应作为应用错误打印。
+    if (error?.code === 'ERR_STREAM_PREMATURE_CLOSE') return
     const fallback = ERROR_CODES.INTERNAL_ERROR
     const status = error.status || fallback.status
 

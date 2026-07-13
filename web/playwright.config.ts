@@ -1,4 +1,4 @@
-// by AI.Coding：Playwright 配置启动 Vite，并为主链路保留失败截图、视频和 trace。
+// by AI.Coding：Playwright 配置启动隔离 Koa/Vite 服务，并为主链路保留失败截图、视频和 trace。
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -13,16 +13,22 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure'
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [{
+    name: 'chromium',
+    use: {
+      ...devices['Desktop Chrome'],
+      launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : undefined
+    }
+  }],
   webServer: [
     {
       command: 'npm run start --prefix ..',
-      url: 'http://127.0.0.1:8000/contents',
+      url: 'http://127.0.0.1:8100/contents',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       env: {
         ...process.env,
-        SERVER_PORT: '8000',
+        SERVER_PORT: '8100',
         MYSQL_DATABASE: process.env.MYSQL_DATABASE || 'coderhub_e2e',
         JWT_SECRET: process.env.JWT_SECRET || 'coderhub-e2e-secret',
         UPLOAD_DIR: process.env.UPLOAD_DIR || 'uploads_e2e'
@@ -36,7 +42,7 @@ export default defineConfig({
       env: {
         ...process.env,
         VITE_API_BASE_URL: '',
-        VITE_PROXY_TARGET: 'http://127.0.0.1:8000'
+        VITE_PROXY_TARGET: 'http://127.0.0.1:8100'
       }
     }
   ]

@@ -18,6 +18,11 @@ const { UPLOAD_PUBLIC_PATH } = require('../config/server')
 
 const app = new Koa()
 
+// by AI.Coding：客户端在页面切换或测试结束时提前关闭流属于正常情况，其它应用错误仍记录供排查。
+app.on('error', (error) => {
+  if (error?.code !== 'ERR_STREAM_PREMATURE_CLOSE') console.error(error)
+})
+
 // 统一错误中间件必须最先注册，才能捕获后续路由抛出的业务错误。
 app.use(errorMiddleware)
 
@@ -39,7 +44,10 @@ app.use(async (ctx, next) => {
   }
 
   ctx.type = path.extname(filePath)
-  ctx.body = fs.createReadStream(filePath)
+  // by AI.Coding：客户端提前断开静态文件流不应升级为未处理的 premature close 错误。
+  const fileStream = fs.createReadStream(filePath)
+  fileStream.on('error', (error) => ctx.app.emit('error', error, ctx))
+  ctx.body = fileStream
 })
 
 // 注册用户端和后台业务路由。
